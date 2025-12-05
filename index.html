@@ -236,13 +236,15 @@
 
             <!-- Tab: Split -->
             <div v-if="currentTab === 'split'" class="pb-32 animate-fade-in-up space-y-6 pt-2">
+                <!-- 更新：即時匯率顯示區塊 (無法手動輸入，自動更新) -->
                 <div class="flex justify-between items-center px-2">
                     <div class="text-[10px] text-stone tracking-widest font-bold uppercase">即時匯率參考</div>
                     <div class="flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm border border-sage-50">
                         <span class="text-xs text-stone">JPY 1 = TWD</span>
-                        <input v-model.number="exchangeRate" type="number" step="0.001" class="w-14 text-right font-bold text-sage-600 bg-transparent border-b border-dotted border-sage-300 focus:outline-none text-sm pb-0.5">
+                        <span class="w-14 text-right font-bold text-sage-600 bg-transparent border-b border-dotted border-sage-300 text-sm pb-0.5">{{ exchangeRate }}</span>
                     </div>
                 </div>
+
                 <div class="bg-gradient-to-br from-sage-300 to-sage-400 rounded-[32px] p-8 text-white shadow-lg shadow-sage-200 relative overflow-hidden">
                     <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-10 -mt-10 blur-2xl"></div>
                     <h2 class="text-[10px] tracking-[0.2em] opacity-70 mb-2 uppercase">總計花費金額</h2>
@@ -483,12 +485,12 @@
 
 <script type="module">
 // 1. Import Firebase Modules
-// FIX: Renamed 'ref' to 'dbRef' to avoid conflict with Vue's ref
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getDatabase, ref as dbRef, set, onValue, push, update, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
-// 2. Firebase Configuration (USER TO REPLACE)
-const firebaseConfig = {apiKey: "AIzaSyDRtLqLIPtLB7WmGqwbS4YjRHpDRF8Rv0g",
+// 2. Firebase Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDRtLqLIPtLB7WmGqwbS4YjRHpDRF8Rv0g",
   authDomain: "nagoya-snow-tour.firebaseapp.com",
   databaseURL: "https://nagoya-snow-tour-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "nagoya-snow-tour",
@@ -612,18 +614,28 @@ createApp({
             setTimeout(() => { toast.value.show = false; }, 3000);
         };
 
+        // Function: Fetch Real-time Exchange Rate
+        const fetchRealTimeExchangeRate = async () => {
+            try {
+                const res = await fetch('https://api.exchangerate-api.com/v4/latest/JPY');
+                const data = await res.json();
+                if(data && data.rates && data.rates.TWD) {
+                    exchangeRate.value = parseFloat(data.rates.TWD.toFixed(3));
+                    showToast('即時匯率已更新'); 
+                }
+            } catch(e) { 
+                console.error('匯率更新失敗:', e);
+            }
+        };
+
         // 4. Setup Realtime Listeners (onMounted)
         onMounted(() => {
             // Traffic Listener
             onValue(dbRef(db, 'traffic'), (snapshot) => {
                 const val = snapshot.val();
                 if (val) {
-                    // Firebase stores arrays with integer keys if sparse, or just arrays.
-                    // Object.values handles both object-map and array formats.
-                    // We check if it's array or object
                     trafficList.value = Array.isArray(val) ? val : Object.values(val);
                 } else {
-                    // Init DB with defaults if empty
                     trafficList.value = defaultTraffic;
                     set(dbRef(db, 'traffic'), defaultTraffic);
                 }
@@ -652,18 +664,19 @@ createApp({
                 }
             });
 
-            // Exchange Rate Listener
+            // Exchange Rate Listener (Listen for updates from other users)
             onValue(dbRef(db, 'exchangeRate'), (snapshot) => {
                 const val = snapshot.val();
                 if(val) exchangeRate.value = parseFloat(val);
             });
 
+            // Initial fetch from API when app loads
+            fetchRealTimeExchangeRate();
+            
             fetchWeather();
         });
 
         // 5. Sync Watchers (Write to Firebase)
-        // Note: This simplest approach overwrites the node when local data changes.
-        // For high-concurrency apps, consider individual push/update actions instead.
         watch(trafficList, (val) => {
             set(dbRef(db, 'traffic'), val);
         }, { deep: true });
@@ -680,6 +693,7 @@ createApp({
             set(dbRef(db, 'locations'), val);
         }, { deep: true });
 
+        // When exchangeRate updates (e.g. from fetchRealTimeExchangeRate), sync to DB
         watch(exchangeRate, (val) => {
             set(dbRef(db, 'exchangeRate'), val);
         });
@@ -728,7 +742,6 @@ createApp({
             confirmModal.value = { show: true, title: 'Delete Item?', message: 'Are you sure?', targetId: id, targetType: type };
         };
         
-        // Modified to clear Database instead of localStorage
         const askReset = () => {
              confirmModal.value = { show: true, title: 'Clear Database?', message: 'All data will be deleted from Firebase.', targetId: null, targetType: 'reset' };
         };
@@ -739,7 +752,6 @@ createApp({
                 trafficList.value = trafficList.value.filter(x => x.id !== targetId);
                 showToast('Traffic item deleted');
             } else if (targetType === 'expense') {
-                // expenses uses index based logic in UI, but we sync whole array.
                 expenses.value.splice(targetId, 1);
                 showToast('Expense record removed');
             } else if (targetType === 'message') {
@@ -749,10 +761,8 @@ createApp({
                 locations.value = locations.value.filter(l => l.id !== targetId);
                 showToast('Location removed');
             } else if (targetType === 'reset') {
-                // Clear DB
                 set(dbRef(db), null);
                 showToast('Database Cleared');
-                // Reload to trigger init defaults
                 setTimeout(() => location.reload(), 1000);
             }
             confirmModal.value.show = false;
