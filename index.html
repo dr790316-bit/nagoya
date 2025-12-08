@@ -1,4 +1,4 @@
-<start_of_user_uploaded_file: index.html><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -127,6 +127,16 @@
             </div>
         </transition>
 
+        <!-- Image Viewer Modal (New) -->
+        <div v-if="showImageModal" class="fixed inset-0 z-[200] bg-sumi/90 backdrop-blur-sm flex items-center justify-center p-4" @click="showImageModal = false">
+            <div class="relative max-w-full max-h-full">
+                <img :src="viewImageSrc" class="max-w-full max-h-[85vh] rounded-2xl shadow-2xl animate-bounce-in object-contain bg-white" @click.stop>
+                <button class="absolute -top-12 right-0 text-white/80 hover:text-white text-3xl transition" @click="showImageModal = false">
+                    <i class="fa-solid fa-circle-xmark"></i>
+                </button>
+            </div>
+        </div>
+
         <!-- Confirm Modal -->
         <div v-if="confirmModal.show" class="absolute inset-0 bg-sumi/10 backdrop-blur-[2px] z-[90] flex items-center justify-center p-8">
             <div class="bg-white w-full max-w-xs rounded-[32px] p-8 shadow-clover animate-bounce-in text-center border border-clover-50">
@@ -192,7 +202,6 @@
             
             <!-- Tab: Traffic -->
             <div v-if="currentTab === 'traffic'" class="pb-32 animate-fade-in-up">
-                <!-- (Traffic content remains the same) -->
                 <div class="sticky top-0 z-10 bg-washi/95 backdrop-blur-md pt-2 pb-6 -mx-6 px-6 mb-2">
                     <div class="flex space-x-3 overflow-x-auto no-scrollbar items-center py-1">
                         <button v-for="day in days" :key="day" @click="currentDay = day" 
@@ -253,7 +262,6 @@
 
             <!-- Tab: Split -->
             <div v-if="currentTab === 'split'" class="pb-32 animate-fade-in-up space-y-6 pt-2">
-                 <!-- (Split content remains the same) -->
                 <div class="flex justify-between items-center px-2">
                     <div class="text-[10px] text-stone tracking-widest font-bold uppercase">即時匯率參考</div>
                     <div class="flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm border border-clover-50">
@@ -285,6 +293,7 @@
                     </div>
                 </div>
                 
+                <!-- 新增支出 Card -->
                 <div class="bg-white rounded-[32px] p-6 shadow-card border border-transparent relative overflow-hidden">
                     <div class="flex justify-between items-center mb-5">
                         <h3 class="font-medium text-sumi tracking-wide">新增支出</h3>
@@ -313,6 +322,25 @@
                                 <button v-for="member in members" :key="member" @click="newExpense.payer = member" :class="newExpense.payer === member ? 'bg-clover-300 text-white shadow-md shadow-clover-100' : 'bg-clover-50/50 text-stone hover:bg-clover-50'" class="py-2.5 rounded-xl text-xs transition-all duration-300 truncate font-medium">{{ member }}</button>
                             </div>
                         </div>
+
+                        <!-- Add Image Attachment for Split Expense -->
+                        <div class="mt-4 pt-4 border-t border-dashed border-stone/10">
+                            <label class="text-[10px] text-stone tracking-widest uppercase block mb-2 flex items-center">
+                                <i class="fa-solid fa-camera mr-1 text-stone/40"></i> 收據圖片 (Receipt)
+                            </label>
+                            <div class="flex items-center space-x-3">
+                                 <div v-if="newExpense.image" class="relative w-16 h-16 rounded-xl overflow-hidden group shadow-sm border border-clover-100">
+                                    <img :src="newExpense.image" class="w-full h-full object-cover">
+                                    <button @click="newExpense.image = ''" class="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-times"></i></button>
+                                </div>
+                                <label class="w-16 h-16 rounded-xl border-2 border-dashed border-clover-200 hover:border-clover-400 bg-clover-50/50 flex flex-col items-center justify-center text-clover-400 cursor-pointer transition">
+                                    <i class="fa-solid fa-plus text-sm mb-1"></i>
+                                    <span class="text-[8px] font-bold">ADD</span>
+                                    <input type="file" accept="image/*" class="hidden" @change="handleExpenseImage">
+                                </label>
+                            </div>
+                        </div>
+
                         <button @click="addExpense" class="w-full mt-2 bg-stone/5 text-sumi py-4 rounded-2xl text-sm font-medium hover:bg-clover-300 hover:text-white hover:shadow-lg hover:shadow-clover-100 transition duration-300 flex items-center justify-center"><i class="fa-solid fa-plus mr-2"></i> 新增一筆</button>
                     </div>
                 </div>
@@ -330,7 +358,13 @@
                                     <div class="text-sumi truncate text-xs font-medium">{{ exp.description }}</div>
                                     <div class="text-[9px] text-stone mt-0.5">{{ exp.date }}</div>
                                 </div>
-                                <div class="font-mono text-clover-600 text-xs">NT$ {{ Math.round(exp.amount).toLocaleString() }}</div>
+                                <div class="flex items-center">
+                                    <span class="font-mono text-clover-600 text-xs mr-2">NT$ {{ Math.round(exp.amount).toLocaleString() }}</span>
+                                    <!-- Image Icon -->
+                                    <button v-if="exp.image" @click.stop="openImageModal(exp.image)" class="text-stone/40 hover:text-clover-500 transition px-1">
+                                        <i class="fa-regular fa-image"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div class="mt-4 pt-4 border-t border-dashed border-stone/20 flex justify-between items-center">
@@ -351,11 +385,134 @@
                             </div>
                         </div>
                         <div class="flex flex-col items-end">
-                            <div class="text-sm font-bold text-sumi font-mono">NT$ {{ Math.round(exp.amount).toLocaleString() }}</div>
+                            <div class="flex items-center space-x-2">
+                                <div class="text-sm font-bold text-sumi font-mono">NT$ {{ Math.round(exp.amount).toLocaleString() }}</div>
+                                <!-- Image Icon in Main List -->
+                                <button v-if="exp.image" @click.stop="openImageModal(exp.image)" class="text-stone/30 hover:text-clover-500 transition text-xs">
+                                    <i class="fa-regular fa-image"></i>
+                                </button>
+                            </div>
                             <button @click="askDelete('expense', expenses.length - 1 - index)" class="text-xs text-stone hover:text-red-400 mt-1 opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
                     </div>
                 </div>
+
+                <!-- Public Wallet Section (New) -->
+                <div class="mt-8 bg-white rounded-[32px] p-6 shadow-card border border-clover-100/50">
+                    <div class="flex items-center mb-6">
+                        <div class="w-10 h-10 rounded-full bg-clover-100 text-clover-500 flex items-center justify-center mr-3 shadow-inner">
+                            <i class="fa-solid fa-wallet text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-sumi tracking-wide">公費錢包</h3>
+                            <p class="text-[10px] text-stone tracking-wider uppercase">Public Wallet</p>
+                        </div>
+                    </div>
+
+                    <!-- 1. Wallet Status & Settings -->
+                    <div class="bg-gradient-to-br from-stone-50 to-clover-50/30 rounded-2xl p-5 mb-6 border border-stone/5">
+                        <div class="flex justify-between items-end mb-1">
+                            <span class="text-[10px] text-stone font-bold tracking-widest uppercase">目前餘額 (Balance)</span>
+                            <div class="text-right">
+                                <span class="text-xs text-stone mr-1">NT$</span>
+                                <span class="text-2xl font-light text-clover-600 font-mono">{{ Math.round(remainingPublicFund).toLocaleString() }}</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center mb-4 text-[9px] text-stone/40">
+                            <span>預算總額: {{ Math.round(publicFundTotal).toLocaleString() }}</span>
+                            <span>已支出: {{ Math.round(totalPublicSpent).toLocaleString() }}</span>
+                        </div>
+
+                        <div class="w-full h-1.5 bg-white rounded-full overflow-hidden shadow-inner mb-4">
+                            <div class="h-full bg-clover-400 rounded-full transition-all duration-1000 ease-out relative" :style="{ width: publicFundPercentage + '%' }">
+                                <div class="absolute right-0 top-0 bottom-0 w-2 bg-white/30"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="pt-4 border-t border-dashed border-stone/10">
+                            <label class="text-[9px] text-stone tracking-widest uppercase block mb-2 flex items-center"><i class="fa-solid fa-gear mr-1 text-stone/30"></i>設定錢包總額 (Set Budget)</label>
+                            <div class="flex items-center space-x-2">
+                                <div class="flex bg-white rounded-lg p-0.5 shadow-sm border border-stone/5">
+                                    <button @click="publicFundCurrency = 'JPY'" :class="publicFundCurrency === 'JPY' ? 'bg-clover-100 text-clover-600' : 'text-stone/50 hover:bg-stone/5'" class="px-2 py-1.5 rounded-md text-[10px] font-bold transition-all">JPY</button>
+                                    <button @click="publicFundCurrency = 'TWD'" :class="publicFundCurrency === 'TWD' ? 'bg-clover-100 text-clover-600' : 'text-stone/50 hover:bg-stone/5'" class="px-2 py-1.5 rounded-md text-[10px] font-bold transition-all">TWD</button>
+                                </div>
+                                <input v-model.number="publicFundInput" type="number" placeholder="金額..." class="flex-1 min-w-0 bg-white border-none rounded-xl px-3 py-2 text-sm text-sumi outline-none focus:ring-1 focus:ring-clover-300 font-mono shadow-sm">
+                                <button @click="updatePublicFund" class="bg-sumi text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-clover-500 transition shadow-lg shadow-stone/20"><i class="fa-solid fa-check text-xs"></i></button>
+                            </div>
+                            <div v-if="publicFundCurrency === 'JPY' && publicFundInput" class="text-right mt-1 px-1">
+                                <span class="text-[9px] text-stone font-mono">≈ NT$ {{ Math.round(publicFundInput * exchangeRate).toLocaleString() }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Add Public Expense (Updated) -->
+                    <div class="mb-6 relative">
+                        <h4 class="text-[10px] text-stone tracking-widest uppercase font-bold mb-3 pl-2 border-l-2 border-camel-300">新增公費支出 (Add Expense)</h4>
+                        <div class="space-y-3">
+                            <input v-model="newPublicExpense.name" placeholder="項目名稱 (Item)..." class="w-full bg-stone/5 border-none rounded-2xl px-4 py-3 text-sm text-sumi outline-none focus:bg-white focus:ring-1 focus:ring-camel-300 transition focus:shadow-sm placeholder-stone/40">
+                            
+                            <!-- Amount & Currency Toggle -->
+                            <div class="flex space-x-2 items-start">
+                                <div class="flex flex-col space-y-1">
+                                    <button @click="newPublicExpense.currency = 'JPY'" :class="newPublicExpense.currency === 'JPY' ? 'bg-camel-400 text-white shadow-md' : 'bg-stone/10 text-stone hover:bg-stone/20'" class="px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all">JPY</button>
+                                    <button @click="newPublicExpense.currency = 'TWD'" :class="newPublicExpense.currency === 'TWD' ? 'bg-camel-400 text-white shadow-md' : 'bg-stone/10 text-stone hover:bg-stone/20'" class="px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all">TWD</button>
+                                </div>
+                                <div class="flex-1 relative">
+                                    <input v-model.number="newPublicExpense.inputAmount" type="number" placeholder="金額..." class="w-full bg-stone/5 border-none rounded-2xl px-4 py-3 pl-8 text-sm text-sumi outline-none focus:bg-white focus:ring-1 focus:ring-camel-300 transition font-mono focus:shadow-sm placeholder-stone/40">
+                                    <span class="absolute left-3.5 top-3.5 text-stone/40 text-xs font-bold">{{ newPublicExpense.currency === 'JPY' ? '¥' : '$' }}</span>
+                                    <!-- JPY Conversion Preview -->
+                                    <div v-if="newPublicExpense.currency === 'JPY' && newPublicExpense.inputAmount" class="absolute right-3 top-3.5 text-[10px] text-stone font-mono">
+                                        ≈ NT$ {{ Math.round(newPublicExpense.inputAmount * exchangeRate).toLocaleString() }}
+                                    </div>
+                                </div>
+                                <button @click="addPublicExpense" class="bg-camel-400 text-white w-12 h-[46px] rounded-2xl text-xs font-bold shadow-lg shadow-camel-100 hover:bg-camel-500 hover:scale-105 transition flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-plus text-sm"></i></button>
+                            </div>
+
+                            <!-- Public Receipt Image Upload -->
+                            <div class="flex items-center space-x-3 pt-1">
+                                <div v-if="newPublicExpense.image" class="relative w-10 h-10 rounded-lg overflow-hidden group shadow-sm border border-stone/10">
+                                    <img :src="newPublicExpense.image" class="w-full h-full object-cover">
+                                    <button @click="newPublicExpense.image = ''" class="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-times text-[10px]"></i></button>
+                                </div>
+                                <label class="flex items-center space-x-2 cursor-pointer bg-stone/5 px-3 py-2 rounded-xl hover:bg-stone/10 transition group">
+                                    <i class="fa-solid fa-camera text-stone/40 group-hover:text-camel-400 transition-colors"></i>
+                                    <span class="text-[10px] text-stone/60 font-bold group-hover:text-stone/80">收據 (Receipt)</span>
+                                    <input type="file" accept="image/*" class="hidden" @change="handlePublicImage">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Expense List -->
+                    <div>
+                        <h4 class="text-[10px] text-stone tracking-widest uppercase font-bold mb-3 pl-2 border-l-2 border-stone/30 flex justify-between items-center">
+                            <span>支出明細 (History)</span>
+                            <span class="text-[9px] bg-stone/10 px-1.5 rounded text-stone/60">{{ publicExpenses.length }}</span>
+                        </h4>
+                        <div v-if="publicExpenses.length === 0" class="text-center py-8 border-2 border-dashed border-stone/5 rounded-2xl">
+                            <p class="text-stone/30 text-xs font-medium tracking-wider">NO RECORDS</p>
+                        </div>
+                        <div v-else class="space-y-2 max-h-[250px] overflow-y-auto pr-1 scrollbar-thin">
+                            <div v-for="(item, index) in publicExpenses.slice().reverse()" :key="item.id" class="flex justify-between items-center p-3.5 bg-stone/5 rounded-2xl group hover:bg-white hover:shadow-card hover:-translate-y-0.5 transition-all duration-300 border border-transparent hover:border-stone/5">
+                                <div class="flex-1 min-w-0 mr-3">
+                                    <div class="text-sm font-medium text-sumi truncate">{{ item.name }}</div>
+                                    <div class="text-[9px] text-stone mt-1 flex items-center">
+                                        <i class="fa-regular fa-clock mr-1 opacity-50"></i>{{ item.date }}
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="font-mono text-sm font-bold text-sumi">NT$ {{ Math.round(item.amount).toLocaleString() }}</span>
+                                    <!-- Detail Icon -->
+                                    <button v-if="item.image" @click.stop="openImageModal(item.image)" class="w-7 h-7 rounded-full bg-white text-stone/40 hover:text-clover-500 hover:shadow-sm flex items-center justify-center transition">
+                                        <i class="fa-regular fa-image text-[10px]"></i>
+                                    </button>
+                                    <button @click="askDelete('publicExpense', item.id)" class="w-7 h-7 rounded-full bg-white text-stone/40 hover:text-red-400 hover:shadow-sm flex items-center justify-center transition opacity-0 group-hover:opacity-100"><i class="fa-solid fa-trash-can text-[10px]"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- Tab: Map -->
@@ -663,18 +820,13 @@ createApp({
         const confirmModal = ref({ show: false, title: '', message: '', targetId: null, targetType: '' });
         const fixedMembers = ['明學', '嘉旺', '郡哲', '柏翰', '聿玄', '常駐', '厚仁', '婉瑜'];
         
-        // Default Data
-        const defaultTraffic = [
-            // (Keep previous default data)
-             { id: 1, day: 1, type: 'plane', time: '02:55', endTime: '06:25', destination: 'TPE → NGO', description: '航班前往名古屋', url: '', ticketUrl: '' },
-             // ... (truncated for brevity, data remains in logic)
-        ];
-        // Note: For brevity in this response, I'm not repeating the full defaultTraffic array, but it should be preserved in the file.
-        // Assuming the file content carries over the full array from previous version.
-
-        const defaultLocations = [
-            { id: 1, name: '長野車站', description: '新幹線搭乘', url: 'https://maps.app.goo.gl/nagano-station' }
-        ];
+        // Image Viewer State
+        const showImageModal = ref(false);
+        const viewImageSrc = ref('');
+        const openImageModal = (src) => {
+            viewImageSrc.value = src;
+            showImageModal.value = true;
+        };
 
         const cityCoords = {
             'Nagoya': { lat: 35.1815, lon: 136.9066 },
@@ -701,11 +853,18 @@ createApp({
         const shoppingModalData = ref({ name: '', description: '', image: '', owner: '', link: '' });
         const currentShoppingMember = ref(null); // Filter state
 
+        // Public Wallet State
+        const publicExpenses = ref([]);
+        const publicFundTotal = ref(0);
+        const publicFundInput = ref('');
+        const publicFundCurrency = ref('JPY');
+        const newPublicExpense = ref({ name: '', inputAmount: '', currency: 'TWD', image: '' }); // Updated structure
+
         const currencyMode = ref('JPY'); 
         const weatherCity = ref('Nagoya');
         const weatherData = ref({});
 
-        const newExpense = ref({ description: '', inputAmount: '', payer: '' });
+        const newExpense = ref({ description: '', inputAmount: '', payer: '', image: '' }); // Added image field
         const trafficModalData = ref({ time: '09:00', endTime: '', type: 'train', destination: '', description: '', url: '', ticketUrl: '' }); 
         const msgText = ref('');
         const msgUser = ref(fixedMembers[0]);
@@ -761,6 +920,16 @@ createApp({
                 if(val) exchangeRate.value = parseFloat(val);
             });
 
+            // Public Wallet Listeners
+            onValue(dbRef(db, 'public_expenses'), (snapshot) => {
+                const val = snapshot.val();
+                publicExpenses.value = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
+            });
+            onValue(dbRef(db, 'public_fund_total'), (snapshot) => {
+                const val = snapshot.val();
+                if(val) publicFundTotal.value = parseFloat(val);
+            });
+
             fetchRealTimeExchangeRate();
             fetchWeather();
         });
@@ -771,6 +940,9 @@ createApp({
         watch(locations, (val) => { set(dbRef(db, 'locations'), val); }, { deep: true });
         watch(shoppingList, (val) => { set(dbRef(db, 'shopping_list'), val); }, { deep: true });
         watch(exchangeRate, (val) => { set(dbRef(db, 'exchangeRate'), val); });
+        
+        // Public Wallet Watchers
+        watch(publicExpenses, (val) => { set(dbRef(db, 'public_expenses'), val); }, { deep: true });
 
         const filteredTraffic = computed(() => {
             return trafficList.value.filter(item => item.day === currentDay.value).sort((a, b) => a.time.localeCompare(b.time));
@@ -810,6 +982,15 @@ createApp({
             return payerExpenses.value.reduce((sum, item) => sum + item.amount, 0);
         });
 
+        // Public Wallet Computeds
+        const totalPublicSpent = computed(() => publicExpenses.value.reduce((sum, item) => sum + item.amount, 0));
+        const remainingPublicFund = computed(() => publicFundTotal.value - totalPublicSpent.value);
+        const publicFundPercentage = computed(() => {
+            if(publicFundTotal.value <= 0) return 0;
+            let p = (remainingPublicFund.value / publicFundTotal.value) * 100;
+            return Math.max(0, Math.min(100, p));
+        });
+
         // Shopping List Filter Logic
         const toggleShoppingMember = (member) => {
             if (currentShoppingMember.value === member) {
@@ -836,6 +1017,7 @@ createApp({
             else if (targetType === 'message') messages.value = messages.value.filter(m => m.id !== targetId);
             else if (targetType === 'location') locations.value = locations.value.filter(l => l.id !== targetId);
             else if (targetType === 'shopping') shoppingList.value = shoppingList.value.filter(l => l.id !== targetId);
+            else if (targetType === 'publicExpense') publicExpenses.value = publicExpenses.value.filter(l => l.id !== targetId);
             else if (targetType === 'reset') { set(dbRef(db), null); setTimeout(() => location.reload(), 1000); }
             confirmModal.value.show = false;
             showToast('Item deleted');
@@ -866,8 +1048,101 @@ createApp({
 
         const addExpense = () => {
             if (!newExpense.value.description || !newExpense.value.inputAmount || !newExpense.value.payer) { showToast('Missing info', 'error'); return; }
-            expenses.value.push({ description: newExpense.value.description, originalAmount: newExpense.value.inputAmount, originalCurrency: currencyMode.value, amount: calculatedTWD.value, payer: newExpense.value.payer, date: new Date().toLocaleDateString() });
-            newExpense.value.description = ''; newExpense.value.inputAmount = ''; showToast('Expense added');
+            expenses.value.push({ 
+                description: newExpense.value.description, 
+                originalAmount: newExpense.value.inputAmount, 
+                originalCurrency: currencyMode.value, 
+                amount: calculatedTWD.value, 
+                payer: newExpense.value.payer, 
+                date: new Date().toLocaleDateString(),
+                image: newExpense.value.image || '' // Include image
+            });
+            newExpense.value.description = ''; 
+            newExpense.value.inputAmount = ''; 
+            newExpense.value.image = ''; // Reset image
+            showToast('Expense added');
+        };
+        
+        // Handle Expense Image
+        const handleExpenseImage = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    const scaleSize = MAX_WIDTH / img.width;
+                    const width = (img.width > MAX_WIDTH) ? MAX_WIDTH : img.width;
+                    const height = (img.width > MAX_WIDTH) ? img.height * scaleSize : img.height;
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    newExpense.value.image = canvas.toDataURL('image/jpeg', 0.6);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+        
+        // Public Wallet Methods
+        const updatePublicFund = () => {
+            if(!publicFundInput.value) return;
+            let amount = publicFundInput.value;
+            if(publicFundCurrency.value === 'JPY') {
+                amount = Math.round(amount * exchangeRate.value);
+            }
+            set(dbRef(db, 'public_fund_total'), amount);
+            publicFundTotal.value = amount; // Optimistic update
+            publicFundInput.value = '';
+            showToast('公費總額已更新');
+        };
+
+        const addPublicExpense = () => {
+            if(!newPublicExpense.value.name || !newPublicExpense.value.inputAmount) { showToast('請輸入完整資訊', 'error'); return; }
+            
+            // Calculate Amount
+            let finalAmount = newPublicExpense.value.inputAmount;
+            if(newPublicExpense.value.currency === 'JPY') {
+                finalAmount = Math.round(newPublicExpense.value.inputAmount * exchangeRate.value);
+            }
+
+            publicExpenses.value.push({
+                id: Date.now(),
+                name: newPublicExpense.value.name,
+                amount: parseFloat(finalAmount),
+                originalAmount: newPublicExpense.value.inputAmount,
+                originalCurrency: newPublicExpense.value.currency,
+                date: new Date().toLocaleDateString(),
+                image: newPublicExpense.value.image || ''
+            });
+            
+            // Reset
+            newPublicExpense.value = { name: '', inputAmount: '', currency: 'TWD', image: '' };
+            showToast('公費支出已記錄');
+        };
+
+        const handlePublicImage = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    const scaleSize = MAX_WIDTH / img.width;
+                    const width = (img.width > MAX_WIDTH) ? MAX_WIDTH : img.width;
+                    const height = (img.width > MAX_WIDTH) ? img.height * scaleSize : img.height;
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    newPublicExpense.value.image = canvas.toDataURL('image/jpeg', 0.6);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
         };
         
         const sendMessage = () => {
@@ -959,11 +1234,18 @@ createApp({
             selectedPayerForDetail, payerExpenses, payerTotal,
             locations, showLocationModal, locationModalData, openLocationModal, editLocation, saveLocation, isEditingLocation,
             shoppingList, showShoppingModal, shoppingModalData, openShoppingModal, editShopping, saveShoppingItem, isEditingShopping, handleImageUpload, currentShoppingMember, toggleShoppingMember, filteredShoppingList,
-            weatherCity, weatherData, fetchWeather, getWeatherDay, getWeatherDate, getWeatherIcon
+            weatherCity, weatherData, fetchWeather, getWeatherDay, getWeatherDate, getWeatherIcon,
+            
+            // Public Wallet Exports
+            publicExpenses, publicFundTotal, publicFundInput, publicFundCurrency, newPublicExpense,
+            updatePublicFund, addPublicExpense, totalPublicSpent, remainingPublicFund, publicFundPercentage,
+            handlePublicImage,
+            
+            // Image Viewer
+            showImageModal, viewImageSrc, openImageModal, handleExpenseImage
         };
     }
 }).mount('#app');
 </script>
 </body>
 </html>
-<end_of_user_uploaded_file: index.html>```
