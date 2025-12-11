@@ -1,4 +1,4 @@
-<start_of_user_uploaded_file: index.html><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -297,7 +297,7 @@
                         </div>
                     </div>
                     
-                    <!-- Add Public Expense (Modified with Currency Toggle) -->
+                    <!-- Add Public Expense (Modified with Currency Toggle & Image Upload) -->
                     <div v-if="!isLocked" class="mb-6">
                         <div class="flex justify-between items-center mb-3 border-l-2 border-camel-300 pl-2">
                             <h4 class="text-[10px] text-stone tracking-widest uppercase font-bold">新增公費支出</h4>
@@ -312,12 +312,20 @@
                                 </div>
                                 <button @click="addPublicExpense" class="bg-camel-400 text-white w-12 h-[44px] rounded-2xl flex items-center justify-center shadow-md"><i class="fa-solid fa-plus"></i></button>
                             </div>
+                            <!-- Added Image Upload for Public Wallet -->
+                            <div class="flex items-center space-x-2 pt-1">
+                                <div v-if="newPublicExpense.image" class="relative w-10 h-10 rounded-lg overflow-hidden group shadow-sm"><img :src="newPublicExpense.image" class="w-full h-full object-cover"><button @click="newPublicExpense.image = ''" class="absolute inset-0 bg-black/40 text-white flex items-center justify-center"><i class="fa-solid fa-times text-xs"></i></button></div>
+                                <label class="flex-1 h-10 rounded-xl border border-dashed border-stone/30 hover:border-camel-400 bg-stone/5 flex items-center justify-center text-stone/50 hover:text-camel-400 cursor-pointer text-[10px] font-bold gap-2 transition"><i class="fa-solid fa-camera"></i> ADD RECEIPT<input type="file" accept="image/*" class="hidden" @change="handlePublicImage"></label>
+                            </div>
                         </div>
                     </div>
                     
                     <div>
                         <h4 class="text-[10px] text-stone tracking-widest uppercase font-bold mb-3 pl-2 border-l-2 border-stone/30">明細 ({{ publicExpenses.length }})</h4>
-                        <div v-for="item in publicExpenses.slice().reverse()" :key="item.id" class="flex justify-between items-center p-3.5 bg-stone/5 rounded-2xl mb-2"><div class="flex-1 min-w-0 mr-3"><div class="text-sm font-medium text-sumi truncate">{{ item.name }}</div><div class="text-[9px] text-stone mt-1">{{ item.date }}</div></div><div class="flex items-center space-x-3"><span class="font-mono text-sm font-bold text-sumi">NT$ {{ Math.round(item.amount).toLocaleString() }}</span><button v-if="!isLocked" @click="askDelete('publicExpense', item.id)" class="text-stone/40 hover:text-red-400"><i class="fa-solid fa-trash-can text-[10px]"></i></button></div></div>
+                        <div v-for="item in publicExpenses.slice().reverse()" :key="item.id" class="flex justify-between items-center p-3.5 bg-stone/5 rounded-2xl mb-2"><div class="flex-1 min-w-0 mr-3"><div class="text-sm font-medium text-sumi truncate">{{ item.name }}</div><div class="text-[9px] text-stone mt-1">{{ item.date }}</div></div><div class="flex items-center space-x-3"><span class="font-mono text-sm font-bold text-sumi">NT$ {{ Math.round(item.amount).toLocaleString() }}</span>
+                            <!-- View Image Button -->
+                            <button v-if="item.image" @click.stop="openImageModal(item.image)" class="text-stone/40 hover:text-clover-500"><i class="fa-regular fa-image"></i></button>
+                            <button v-if="!isLocked" @click="askDelete('publicExpense', item.id)" class="text-stone/40 hover:text-red-400"><i class="fa-solid fa-trash-can text-[10px]"></i></button></div></div>
                     </div>
                 </div>
             </div>
@@ -454,6 +462,7 @@
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getDatabase, ref as dbRef, set, onValue, push, update, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+import { getStorage, ref as storageRef, uploadString, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDRtLqLIPtLB7WmGqwbS4YjRHpDRF8Rv0g",
@@ -469,13 +478,18 @@ const firebaseConfig = {
 try {
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const storage = getStorage(app);
     window.firebaseDb = db; 
+    window.firebaseStorage = storage;
 } catch (error) {
     console.error("Firebase Init Error:", error);
-    alert("Database connection failed. Please check network.");
+    // Allow app to continue offline even if init fails (will use local storage)
+    window.firebaseDb = null;
+    window.firebaseStorage = null;
 }
 
 const db = window.firebaseDb;
+const storage = window.firebaseStorage;
 const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
 
 createApp({
@@ -531,6 +545,18 @@ createApp({
         const isEditingLocation = ref(false);
         const editingLocationId = ref(null);
 
+        // Helper: Get Japan Date Object (Fix for Timezone)
+        const getJapanDateObj = () => {
+            const date = new Date();
+            // Create a date string in JST (Asia/Tokyo)
+            const jstString = date.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+            return new Date(jstString);
+        };
+        
+        // Helper: Formatters for Japan Time
+        const getJapanDateStr = () => getJapanDateObj().toLocaleDateString('zh-TW');
+        const getJapanTimeStr = () => getJapanDateObj().toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' });
+
         const showToast = (msg, type = 'success') => { toast.value = { show: true, message: msg, icon: type === 'error' ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-clover' }; setTimeout(() => { toast.value.show = false; }, 3000); };
         const openImageModal = (src) => { viewImageSrc.value = src; showImageModal.value = true; };
         
@@ -563,6 +589,30 @@ createApp({
             reader.readAsDataURL(file);
         };
 
+        // Helper: Upload Image to Firebase Storage
+        const uploadImageToStorage = async (base64String, folderName) => {
+            if (!base64String || !storage) return '';
+            // If it's already a URL (editing existing item), return it
+            if (base64String.startsWith('http')) return base64String;
+
+            try {
+                // Create unique filename: folder/timestamp.jpg
+                const fileName = `${folderName}/${Date.now()}.jpg`;
+                const imageRef = storageRef(storage, fileName);
+                
+                // Upload Base64 string (processImage outputs data_url)
+                await uploadString(imageRef, base64String, 'data_url');
+                
+                // Get Download URL
+                const downloadURL = await getDownloadURL(imageRef);
+                return downloadURL;
+            } catch (error) {
+                console.error("Upload failed:", error);
+                showToast("圖片上傳失敗", "error");
+                return '';
+            }
+        };
+
         const setUser = (name) => {
             currentUser.value = name;
             localStorage.setItem('nagoya_user', name);
@@ -579,47 +629,65 @@ createApp({
         };
 
         onMounted(() => {
-            if(!db) return;
+            // 1. Load from LocalStorage FIRST (Offline Capability)
+            try {
+                if(localStorage.getItem('traffic')) trafficList.value = JSON.parse(localStorage.getItem('traffic'));
+                if(localStorage.getItem('expenses')) expenses.value = JSON.parse(localStorage.getItem('expenses'));
+                if(localStorage.getItem('messages')) messages.value = JSON.parse(localStorage.getItem('messages'));
+                if(localStorage.getItem('locations')) locations.value = JSON.parse(localStorage.getItem('locations'));
+                if(localStorage.getItem('shopping_list')) shoppingList.value = JSON.parse(localStorage.getItem('shopping_list'));
+                if(localStorage.getItem('public_expenses')) publicExpenses.value = JSON.parse(localStorage.getItem('public_expenses'));
+                if(localStorage.getItem('exchangeRate')) exchangeRate.value = parseFloat(localStorage.getItem('exchangeRate'));
+                if(localStorage.getItem('public_fund_total')) publicFundTotal.value = parseFloat(localStorage.getItem('public_fund_total'));
+            } catch(e) { console.error('Local Load Error', e); }
+
             const savedUser = localStorage.getItem('nagoya_user');
             if(savedUser && members.value.includes(savedUser)) setUser(savedUser);
+            
+            // 2. Then connect to Firebase (Sync)
+            if(db) {
+                let loadCheck = 0;
+                const checkLoad = () => { loadCheck++; if(loadCheck >= 2) isLoading.value = false; };
+                
+                onValue(dbRef(db, 'traffic'), (s) => { trafficList.value = s.val() || []; checkLoad(); });
+                onValue(dbRef(db, 'expenses'), (s) => { expenses.value = s.val() || []; checkLoad(); });
+                onValue(dbRef(db, 'messages'), (s) => { messages.value = s.val() || []; nextTick(() => { if (msgContainer.value) msgContainer.value.scrollTop = msgContainer.value.scrollHeight; }); });
+                onValue(dbRef(db, 'locations'), (s) => { locations.value = s.val() || []; });
+                onValue(dbRef(db, 'shopping_list'), (s) => { shoppingList.value = s.val() || []; });
+                onValue(dbRef(db, 'exchangeRate'), (s) => { if(s.val()) exchangeRate.value = parseFloat(s.val()); });
+                onValue(dbRef(db, 'public_expenses'), (s) => { publicExpenses.value = s.val() || []; });
+                onValue(dbRef(db, 'public_fund_total'), (s) => { if(s.val()) publicFundTotal.value = parseFloat(s.val()); });
+                // Listen for Global Lock
+                onValue(dbRef(db, 'global_settings/is_locked'), (s) => { isLocked.value = !!s.val(); });
+            }
 
-            let loadCheck = 0;
-            const checkLoad = () => { loadCheck++; if(loadCheck >= 2) isLoading.value = false; };
-            
-            onValue(dbRef(db, 'traffic'), (s) => { trafficList.value = s.val() || []; checkLoad(); });
-            onValue(dbRef(db, 'expenses'), (s) => { expenses.value = s.val() || []; checkLoad(); });
-            onValue(dbRef(db, 'messages'), (s) => { messages.value = s.val() || []; nextTick(() => { if (msgContainer.value) msgContainer.value.scrollTop = msgContainer.value.scrollHeight; }); });
-            onValue(dbRef(db, 'locations'), (s) => { locations.value = s.val() || []; });
-            onValue(dbRef(db, 'shopping_list'), (s) => { shoppingList.value = s.val() || []; });
-            onValue(dbRef(db, 'exchangeRate'), (s) => { if(s.val()) exchangeRate.value = parseFloat(s.val()); });
-            onValue(dbRef(db, 'public_expenses'), (s) => { publicExpenses.value = s.val() || []; });
-            onValue(dbRef(db, 'public_fund_total'), (s) => { if(s.val()) publicFundTotal.value = parseFloat(s.val()); });
-            
-            // Listen for Global Lock
-            onValue(dbRef(db, 'global_settings/is_locked'), (s) => { isLocked.value = !!s.val(); });
-            
-            setTimeout(() => isLoading.value = false, 3000);
+            setTimeout(() => isLoading.value = false, 3000); // Fallback if offline
             fetchRealTimeExchangeRate();
             fetchWeather();
         });
 
-        watch(trafficList, (v) => { if(db) set(dbRef(db, 'traffic'), v); }, { deep: true });
-        watch(expenses, (v) => { if(db) set(dbRef(db, 'expenses'), v); }, { deep: true });
-        watch(messages, (v) => { if(db) set(dbRef(db, 'messages'), v); }, { deep: true });
-        watch(locations, (v) => { if(db) set(dbRef(db, 'locations'), v); }, { deep: true });
-        watch(shoppingList, (v) => { if(db) set(dbRef(db, 'shopping_list'), v); }, { deep: true });
-        watch(exchangeRate, (v) => { if(db) set(dbRef(db, 'exchangeRate'), v); });
-        watch(publicExpenses, (v) => { if(db) set(dbRef(db, 'public_expenses'), v); }, { deep: true });
+        // Watch and Sync to LocalStorage (Offline Persistence)
+        watch(trafficList, (v) => { localStorage.setItem('traffic', JSON.stringify(v)); if(db) set(dbRef(db, 'traffic'), v); }, { deep: true });
+        watch(expenses, (v) => { localStorage.setItem('expenses', JSON.stringify(v)); if(db) set(dbRef(db, 'expenses'), v); }, { deep: true });
+        watch(messages, (v) => { localStorage.setItem('messages', JSON.stringify(v)); if(db) set(dbRef(db, 'messages'), v); }, { deep: true });
+        watch(locations, (v) => { localStorage.setItem('locations', JSON.stringify(v)); if(db) set(dbRef(db, 'locations'), v); }, { deep: true });
+        watch(shoppingList, (v) => { localStorage.setItem('shopping_list', JSON.stringify(v)); if(db) set(dbRef(db, 'shopping_list'), v); }, { deep: true });
+        watch(exchangeRate, (v) => { localStorage.setItem('exchangeRate', v); if(db) set(dbRef(db, 'exchangeRate'), v); });
+        watch(publicExpenses, (v) => { localStorage.setItem('public_expenses', JSON.stringify(v)); if(db) set(dbRef(db, 'public_expenses'), v); }, { deep: true });
+        watch(publicFundTotal, (v) => { localStorage.setItem('public_fund_total', v); });
 
         const filteredTraffic = computed(() => trafficList.value.filter(item => item.day === currentDay.value).sort((a, b) => a.time.localeCompare(b.time)));
         const totalExpense = computed(() => expenses.value.reduce((sum, item) => sum + item.amount, 0));
         const calculatedTWD = computed(() => !newExpense.value.inputAmount ? 0 : (currencyMode.value === 'JPY' ? Math.round(newExpense.value.inputAmount * exchangeRate.value) : Math.round(newExpense.value.inputAmount)));
         
         const isToday = computed(() => true); 
+        
+        // Corrected for Japan Time (Timeline Position)
         const currentTimePercent = computed(() => {
-            const now = new Date();
-            const h = now.getHours();
-            const m = now.getMinutes();
+            const japanDate = getJapanDateObj();
+            const h = japanDate.getHours();
+            const m = japanDate.getMinutes();
+            // Assuming trip activity is roughly 6 AM to 12 PM (18 hours)
             const totalMinutes = 18 * 60;
             const currentMinutes = (h * 60 + m) - (6 * 60);
             const pct = (currentMinutes / totalMinutes) * 100;
@@ -667,6 +735,7 @@ createApp({
         };
 
         const handleExpenseImage = (event) => processImage(event.target.files[0], (d) => newExpense.value.image = d);
+        // Added: Handle Public Image
         const handlePublicImage = (event) => processImage(event.target.files[0], (d) => newPublicExpense.value.image = d);
         const handleImageUpload = (event) => processImage(event.target.files[0], (d) => shoppingModalData.value.image = d);
 
@@ -681,11 +750,28 @@ createApp({
         };
         const getTransportIcon = (t) => ({ 'plane': 'fa-solid fa-plane', 'train': 'fa-solid fa-train', 'bus': 'fa-solid fa-bus', 'taxi': 'fa-solid fa-taxi', 'walk': 'fa-solid fa-person-walking' }[t] || 'fa-solid fa-diamond-turn-right');
 
-        const addExpense = () => {
+        const addExpense = async () => {
             if (!newExpense.value.description || !newExpense.value.inputAmount || !newExpense.value.payer) { showToast('Missing info', 'error'); return; }
-            expenses.value.push({ description: newExpense.value.description, originalAmount: newExpense.value.inputAmount, originalCurrency: currencyMode.value, amount: calculatedTWD.value, payer: newExpense.value.payer, date: new Date().toLocaleDateString(), image: newExpense.value.image || '' });
-            newExpense.value = { description: '', inputAmount: '', payer: currentUser.value || newExpense.value.payer, image: '' }; 
-            showToast('Expense added');
+            
+            isLoading.value = true; // Show loading
+            
+            try {
+                let imageUrl = '';
+                if (newExpense.value.image) {
+                     imageUrl = await uploadImageToStorage(newExpense.value.image, 'expenses');
+                }
+
+                // Use Japan Date
+                expenses.value.push({ description: newExpense.value.description, originalAmount: newExpense.value.inputAmount, originalCurrency: currencyMode.value, amount: calculatedTWD.value, payer: newExpense.value.payer, date: getJapanDateStr(), image: imageUrl || '' });
+                
+                newExpense.value = { description: '', inputAmount: '', payer: currentUser.value || newExpense.value.payer, image: '' }; 
+                showToast('Expense added');
+            } catch(e) {
+                console.error(e);
+                showToast('Error', 'error');
+            } finally {
+                isLoading.value = false; // Hide loading
+            }
         };
         
         // Updated Public Fund Logic (JPY/TWD)
@@ -700,27 +786,42 @@ createApp({
             showToast('Updated (Saved as TWD)'); 
         };
         
-        // Updated Public Expense Logic (JPY/TWD)
-        const addPublicExpense = () => {
+        // Updated Public Expense Logic (JPY/TWD) + Image
+        const addPublicExpense = async () => {
             if(!newPublicExpense.value.name || !newPublicExpense.value.inputAmount) { showToast('Error', 'error'); return; }
-            let final = newPublicExpense.value.inputAmount; 
-            // If JPY, convert to TWD
-            if(newPublicExpense.value.currency === 'JPY') final = Math.round(final * exchangeRate.value);
             
-            publicExpenses.value.push({ 
-                id: Date.now(), 
-                name: newPublicExpense.value.name, 
-                amount: parseFloat(final), // Store as TWD
-                originalAmount: newPublicExpense.value.inputAmount, 
-                originalCurrency: newPublicExpense.value.currency, 
-                date: new Date().toLocaleDateString(), 
-                image: newPublicExpense.value.image || '' 
-            });
-            newPublicExpense.value = { name: '', inputAmount: '', currency: 'JPY', image: '' }; 
-            showToast('Added');
+            isLoading.value = true;
+
+            try {
+                let final = newPublicExpense.value.inputAmount; 
+                // If JPY, convert to TWD
+                if(newPublicExpense.value.currency === 'JPY') final = Math.round(final * exchangeRate.value);
+                
+                let imageUrl = '';
+                if (newPublicExpense.value.image) {
+                    imageUrl = await uploadImageToStorage(newPublicExpense.value.image, 'public_expenses');
+                }
+
+                publicExpenses.value.push({ 
+                    id: Date.now(), 
+                    name: newPublicExpense.value.name, 
+                    amount: parseFloat(final), // Store as TWD
+                    originalAmount: newPublicExpense.value.inputAmount, 
+                    originalCurrency: newPublicExpense.value.currency, 
+                    date: getJapanDateStr(), // Use Japan Date
+                    image: imageUrl || '' // Include Image URL
+                });
+                newPublicExpense.value = { name: '', inputAmount: '', currency: 'JPY', image: '' }; 
+                showToast('Added');
+            } catch(e) {
+                console.error(e);
+                showToast('Error', 'error');
+            } finally {
+                isLoading.value = false;
+            }
         };
 
-        const sendMessage = () => { const user = currentUser.value || msgUser.value; if (!msgText.value.trim()) return; messages.value.push({ id: Date.now(), user: user, text: msgText.value, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); msgText.value = ''; };
+        const sendMessage = () => { const user = currentUser.value || msgUser.value; if (!msgText.value.trim()) return; messages.value.push({ id: Date.now(), user: user, text: msgText.value, time: getJapanTimeStr() }); msgText.value = ''; };
         const openLocationModal = () => { isEditingLocation.value = false; locationModalData.value = { name: '', description: '', url: '' }; showLocationModal.value = true; };
         const editLocation = (loc) => { isEditingLocation.value = true; editingLocationId.value = loc.id; locationModalData.value = { ...loc }; showLocationModal.value = true; };
         const saveLocation = () => { if(!locationModalData.value.name) { showToast('Name required', 'error'); return; } if(isEditingLocation.value) { const idx = locations.value.findIndex(l => l.id === editingLocationId.value); if(idx !== -1) locations.value[idx] = { ...locationModalData.value, id: editingLocationId.value }; } else locations.value.push({ id: Date.now(), ...locationModalData.value }); showLocationModal.value = false; showToast('Saved'); };
@@ -729,7 +830,35 @@ createApp({
         const openShoppingModal = () => { isEditingShopping.value = false; shoppingModalData.value = { name: '', description: '', image: '', owner: currentShoppingMember.value || currentUser.value || members.value[0], link: '', isBought: false }; showShoppingModal.value = true; };
         const editShopping = (item) => { isEditingShopping.value = true; editingShoppingId.value = item.id; shoppingModalData.value = { ...item }; showShoppingModal.value = true; };
         const toggleBought = (item) => { const idx = shoppingList.value.findIndex(l => l.id === item.id); if(idx !== -1) shoppingList.value[idx] = { ...item, isBought: !item.isBought }; };
-        const saveShoppingItem = () => { if(!shoppingModalData.value.name) { showToast('Name required', 'error'); return; } if(isEditingShopping.value) { const idx = shoppingList.value.findIndex(l => l.id === editingShoppingId.value); if(idx !== -1) shoppingList.value[idx] = { ...shoppingModalData.value, id: editingShoppingId.value }; } else shoppingList.value.push({ id: Date.now(), ...shoppingModalData.value }); showShoppingModal.value = false; showToast('Saved'); };
+        const saveShoppingItem = async () => { 
+            if(!shoppingModalData.value.name) { showToast('Name required', 'error'); return; } 
+            
+            isLoading.value = true;
+
+            try {
+                let imageUrl = shoppingModalData.value.image;
+                // Only upload if it's base64 (starts with data:)
+                if (imageUrl && imageUrl.startsWith('data:')) {
+                    imageUrl = await uploadImageToStorage(imageUrl, 'shopping');
+                }
+
+                const itemData = { ...shoppingModalData.value, image: imageUrl };
+
+                if(isEditingShopping.value) { 
+                    const idx = shoppingList.value.findIndex(l => l.id === editingShoppingId.value); 
+                    if(idx !== -1) shoppingList.value[idx] = { ...itemData, id: editingShoppingId.value }; 
+                } else { 
+                    shoppingList.value.push({ id: Date.now(), ...itemData }); 
+                }
+                showShoppingModal.value = false; 
+                showToast('Saved');
+            } catch (e) {
+                console.error(e);
+                showToast('Error', 'error');
+            } finally {
+                isLoading.value = false;
+            }
+        };
 
         const fetchWeather = async () => { const coords = cityCoords[weatherCity.value]; if(!coords) return; try { const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo`); const json = await res.json(); if(json && json.daily) weatherData.value = json; } catch(e) { console.warn('Weather fetch failed', e); } };
         const getWeatherDay = (idx) => { const d = new Date(); d.setDate(d.getDate() + idx); return ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()]; };
@@ -752,4 +881,3 @@ createApp({
 </script>
 </body>
 </html>
-<end_of_user_uploaded_file: index.html>
