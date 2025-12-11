@@ -2,27 +2,18 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <!-- 加入 viewport-fit=cover 以適配 iPhone 瀏海屏 -->
+    <!-- 加入 viewport-fit=cover 以適配 iPhone 瀏海屏，並禁止縮放 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Nagoya Trip 🍀 (Firebase Sync)</title>
     
-    <!-- =========== PWA 與 APP 圖示設定 (修改處) =========== -->
-    <!-- iOS 桌面圖示 -->
-    <link rel="apple-touch-icon" href="image2.png">
-    <!-- 一般瀏覽器圖示 -->
+    <!-- =========== PWA 設定 =========== -->
     <link rel="icon" type="image/png" href="image2.png">
-    
-    <!-- iOS 開啟全螢幕 APP 模式 (隱藏網址列) -->
+    <link rel="apple-touch-icon" href="image2.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Nagoya Trip">
-    
-    <!-- Android/Chrome PWA 設定 -->
     <link rel="manifest" href="manifest.json">
-    
-    <!-- 主題顏色 (讓狀態列與 APP 融合) -->
     <meta name="theme-color" content="#F5F9F6">
-    <!-- ================================================= -->
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -38,49 +29,16 @@
             theme: {
                 extend: {
                     colors: {
-                        // 韓系幸運草綠色系
-                        clover: {
-                            50: '#F5F9F6',
-                            100: '#E6F2E8',
-                            200: '#CDE5D2',
-                            300: '#A4D1AD',
-                            400: '#7EB989',
-                            500: '#5E9C6B',
-                            600: '#467A51',
-                        },
-                        camel: {
-                            50: '#FCFBF9',
-                            100: '#F5F0E6',
-                            200: '#EADFC9',
-                            300: '#C9B8A3',
-                            400: '#B59F85',
-                            500: '#9E866b',
-                        },
-                        washi: '#FFFEFA',
-                        sumi: '#444444',
-                        stone: '#999999',
+                        clover: { 50: '#F5F9F6', 100: '#E6F2E8', 200: '#CDE5D2', 300: '#A4D1AD', 400: '#7EB989', 500: '#5E9C6B', 600: '#467A51' },
+                        camel: { 50: '#FCFBF9', 100: '#F5F0E6', 200: '#EADFC9', 300: '#C9B8A3', 400: '#B59F85', 500: '#9E866b' },
+                        washi: '#FFFEFA', sumi: '#444444', stone: '#999999',
                     },
-                    fontFamily: {
-                        sans: ['"Noto Sans JP"', 'sans-serif'],
-                    },
-                    boxShadow: {
-                        'soft': '0 8px 30px -8px rgba(164, 209, 173, 0.25)',
-                        'card': '0 4px 20px -4px rgba(0, 0, 0, 0.03)',
-                        'clover': '0 10px 25px -5px rgba(94, 156, 107, 0.2)',
-                    },
-                    animation: {
-                        'fade-in-up': 'fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-                        'bounce-in': 'bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                    },
+                    fontFamily: { sans: ['"Noto Sans JP"', 'sans-serif'] },
+                    boxShadow: { 'soft': '0 8px 30px -8px rgba(164, 209, 173, 0.25)', 'card': '0 4px 20px -4px rgba(0, 0, 0, 0.03)', 'clover': '0 10px 25px -5px rgba(94, 156, 107, 0.2)' },
+                    animation: { 'fade-in-up': 'fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1)', 'bounce-in': 'bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)' },
                     keyframes: {
-                        fadeInUp: {
-                            '0%': { opacity: '0', transform: 'translateY(20px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
-                        },
-                        bounceIn: {
-                            '0%': { opacity: '0', transform: 'scale(0.9)' },
-                            '100%': { opacity: '1', transform: 'scale(1)' },
-                        }
+                        fadeInUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        bounceIn: { '0%': { opacity: '0', transform: 'scale(0.9)' }, '100%': { opacity: '1', transform: 'scale(1)' } }
                     }
                 }
             }
@@ -93,8 +51,7 @@
             font-family: 'Noto Sans JP', sans-serif;
             touch-action: manipulation; 
             color: #444444;
-            /* 防止 iOS 回彈效果露出白色背景 */
-            overscroll-behavior-y: none;
+            overscroll-behavior-y: none; /* 防止 iOS 回彈 */
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -104,8 +61,7 @@
             margin: 0 auto;
             background: #FFFEFA;
             min-height: 100vh;
-            /* 針對 Standalone 模式優化高度 */
-            min-height: 100dvh;
+            min-height: 100dvh; /* Mobile Viewport Fix */
             position: relative;
             box-shadow: 0 20px 60px -15px rgba(94, 156, 107, 0.15);
             overflow: hidden;
@@ -128,14 +84,8 @@
         .toast-enter-active, .toast-leave-active { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(-20px) scale(0.95); }
 
-        .timeline-line {
-            background: linear-gradient(to bottom, #CDE5D2 0%, #CDE5D2 50%, transparent 100%);
-        }
-        
-        ::selection {
-            background: #CDE5D2;
-            color: #467A51;
-        }
+        .timeline-line { background: linear-gradient(to bottom, #CDE5D2 0%, #CDE5D2 50%, transparent 100%); }
+        ::selection { background: #CDE5D2; color: #467A51; }
     </style>
 </head>
 <body>
@@ -143,6 +93,12 @@
 <div id="app">
     <div class="app-container font-sans">
         
+        <!-- Loading Screen (New) -->
+        <div v-if="isLoading" class="absolute inset-0 z-[300] bg-washi/95 backdrop-blur-sm flex flex-col items-center justify-center transition-opacity duration-500">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-clover-500 mb-4 shadow-clover"></div>
+            <p class="text-xs text-clover-600 tracking-[0.3em] font-bold animate-pulse">LOADING</p>
+        </div>
+
         <!-- Toast -->
         <transition name="toast">
             <div v-if="toast.show" class="fixed top-8 left-1/2 transform -translate-x-1/2 z-[100] bg-white/95 backdrop-blur-md text-sumi px-6 py-3 rounded-full shadow-clover flex items-center space-x-3 min-w-[200px] justify-center border border-clover-100">
@@ -151,7 +107,7 @@
             </div>
         </transition>
 
-        <!-- Image Viewer Modal (New) -->
+        <!-- Image Viewer Modal -->
         <div v-if="showImageModal" class="fixed inset-0 z-[200] bg-sumi/90 backdrop-blur-sm flex items-center justify-center p-4" @click="showImageModal = false">
             <div class="relative max-w-full max-h-full">
                 <img :src="viewImageSrc" class="max-w-full max-h-[85vh] rounded-2xl shadow-2xl animate-bounce-in object-contain bg-white" @click.stop>
@@ -189,33 +145,19 @@
 
             <div class="flex justify-between items-center px-1">
                 <nav class="flex space-x-2 mx-auto w-full justify-between max-w-[340px]">
-                    <button @click="currentTab = 'traffic'" :class="currentTab === 'traffic' ? 'text-clover-500' : 'text-stone/60 hover:text-stone'" class="flex flex-col items-center transition-all duration-500 group relative py-2 px-2 flex-1">
-                        <i class="fa-solid fa-train-subway text-lg mb-2 transition-transform duration-300" :class="currentTab === 'traffic' ? '-translate-y-1' : ''"></i>
-                        <span class="text-[9px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-1">交通</span>
-                        <div v-if="currentTab === 'traffic'" class="absolute bottom-0 w-1 h-1 bg-clover-400 rounded-full"></div>
-                    </button>
-                    <button @click="currentTab = 'split'" :class="currentTab === 'split' ? 'text-clover-500' : 'text-stone/60 hover:text-stone'" class="flex flex-col items-center transition-all duration-500 group relative py-2 px-2 flex-1">
-                        <i class="fa-solid fa-yen-sign text-lg mb-2 transition-transform duration-300" :class="currentTab === 'split' ? '-translate-y-1' : ''"></i>
-                        <span class="text-[9px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-1">分帳</span>
-                        <div v-if="currentTab === 'split'" class="absolute bottom-0 w-1 h-1 bg-clover-400 rounded-full"></div>
-                    </button>
-                    <button @click="currentTab = 'map'" :class="currentTab === 'map' ? 'text-clover-500' : 'text-stone/60 hover:text-stone'" class="flex flex-col items-center transition-all duration-500 group relative py-2 px-2 flex-1">
-                        <i class="fa-regular fa-map text-lg mb-2 transition-transform duration-300" :class="currentTab === 'map' ? '-translate-y-1' : ''"></i>
-                        <span class="text-[9px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-1">地圖</span>
-                        <div v-if="currentTab === 'map'" class="absolute bottom-0 w-1 h-1 bg-clover-400 rounded-full"></div>
-                    </button>
-                    <button @click="currentTab = 'broadcast'" :class="currentTab === 'broadcast' ? 'text-clover-500' : 'text-stone/60 hover:text-stone'" class="flex flex-col items-center transition-all duration-500 group relative py-2 px-2 flex-1">
+                    <button v-for="tab in ['traffic', 'split', 'map', 'broadcast', 'info']" :key="tab" @click="currentTab = tab" :class="currentTab === tab ? 'text-clover-500' : 'text-stone/60 hover:text-stone'" class="flex flex-col items-center transition-all duration-500 group relative py-2 px-2 flex-1">
                         <div class="relative">
-                            <i class="fa-regular fa-comment-dots text-lg mb-2 transition-transform duration-300" :class="currentTab === 'broadcast' ? '-translate-y-1' : ''"></i>
-                            <span v-if="messages.length > 0" class="absolute -top-1 -right-1 w-1.5 h-1.5 bg-camel-400 rounded-full border border-washi"></span>
+                            <i :class="{
+                                'traffic': 'fa-solid fa-train-subway',
+                                'split': 'fa-solid fa-yen-sign',
+                                'map': 'fa-regular fa-map',
+                                'broadcast': 'fa-regular fa-comment-dots',
+                                'info': 'fa-solid fa-circle-info'
+                            }[tab]" class="text-lg mb-2 transition-transform duration-300" :class="currentTab === tab ? '-translate-y-1' : ''"></i>
+                            <span v-if="tab === 'broadcast' && messages.length > 0" class="absolute -top-1 -right-1 w-1.5 h-1.5 bg-camel-400 rounded-full border border-washi"></span>
                         </div>
-                        <span class="text-[9px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-1">留言</span>
-                        <div v-if="currentTab === 'broadcast'" class="absolute bottom-0 w-1 h-1 bg-clover-400 rounded-full"></div>
-                    </button>
-                    <button @click="currentTab = 'info'" :class="currentTab === 'info' ? 'text-clover-500' : 'text-stone/60 hover:text-stone'" class="flex flex-col items-center transition-all duration-500 group relative py-2 px-2 flex-1">
-                        <i class="fa-solid fa-circle-info text-lg mb-2 transition-transform duration-300" :class="currentTab === 'info' ? '-translate-y-1' : ''"></i>
-                        <span class="text-[9px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-1">資訊</span>
-                        <div v-if="currentTab === 'info'" class="absolute bottom-0 w-1 h-1 bg-clover-400 rounded-full"></div>
+                        <span class="text-[9px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-1 uppercase">{{ tab }}</span>
+                        <div v-if="currentTab === tab" class="absolute bottom-0 w-1 h-1 bg-clover-400 rounded-full"></div>
                     </button>
                 </nav>
             </div>
@@ -327,11 +269,11 @@
                         </div>
                     </div>
                     <div class="space-y-4">
-                        <input v-model="newExpense.description" placeholder="項目名稱..." class="w-full bg-clover-50/50 border-none rounded-2xl p-4 text-sm text-sumi placeholder-stone/50 focus:ring-2 focus:ring-clover-100 outline-none transition">
+                        <input v-model="newExpense.description" placeholder="項目名稱..." class="w-full bg-clover-50/50 border-none rounded-2xl p-4 text-sm text-sumi placeholder-stone/50 focus:ring-2 focus:ring-clover-100 outline-none transition" enterkeyhint="next">
                         <div class="flex space-x-3 relative">
                             <div class="flex-1 relative">
                                 <span class="absolute left-4 top-4 text-stone/50 text-sm font-bold">{{ currencyMode === 'JPY' ? '¥' : '$' }}</span>
-                                <input v-model.number="newExpense.inputAmount" type="number" placeholder="0" class="w-full pl-8 bg-clover-50/50 border-none rounded-2xl p-4 text-sm text-sumi placeholder-stone/50 focus:ring-2 focus:ring-clover-100 outline-none transition font-mono">
+                                <input v-model.number="newExpense.inputAmount" type="number" placeholder="0" class="w-full pl-8 bg-clover-50/50 border-none rounded-2xl p-4 text-sm text-sumi placeholder-stone/50 focus:ring-2 focus:ring-clover-100 outline-none transition font-mono" enterkeyhint="done">
                             </div>
                             <div class="flex items-center justify-center px-4 bg-clover-50/50 rounded-2xl min-w-[90px]">
                                 <div class="text-right">
@@ -347,7 +289,7 @@
                             </div>
                         </div>
 
-                        <!-- Add Image Attachment for Split Expense -->
+                        <!-- Add Image Attachment -->
                         <div class="mt-4 pt-4 border-t border-dashed border-stone/10">
                             <label class="text-[10px] text-stone tracking-widest uppercase block mb-2 flex items-center">
                                 <i class="fa-solid fa-camera mr-1 text-stone/40"></i> 收據圖片 (Receipt)
@@ -384,7 +326,6 @@
                                 </div>
                                 <div class="flex items-center">
                                     <span class="font-mono text-clover-600 text-xs mr-2">NT$ {{ Math.round(exp.amount).toLocaleString() }}</span>
-                                    <!-- Image Icon -->
                                     <button v-if="exp.image" @click.stop="openImageModal(exp.image)" class="text-stone/40 hover:text-clover-500 transition px-1">
                                         <i class="fa-regular fa-image"></i>
                                     </button>
@@ -395,6 +336,13 @@
                             <span class="text-[10px] text-stone font-bold tracking-widest uppercase">Total</span>
                             <span class="text-lg font-medium text-sumi font-mono">NT$ {{ Math.round(payerTotal).toLocaleString() }}</span>
                         </div>
+                    </div>
+                    
+                    <!-- Export CSV Button (New) -->
+                    <div class="mt-4 text-center">
+                        <button @click="exportToCSV" class="text-xs text-stone/50 hover:text-clover-600 underline tracking-wider flex items-center justify-center w-full py-2">
+                            <i class="fa-solid fa-file-csv mr-1.5"></i>匯出 Excel (CSV)
+                        </button>
                     </div>
                 </div>
                 
@@ -411,7 +359,6 @@
                         <div class="flex flex-col items-end">
                             <div class="flex items-center space-x-2">
                                 <div class="text-sm font-bold text-sumi font-mono">NT$ {{ Math.round(exp.amount).toLocaleString() }}</div>
-                                <!-- Image Icon in Main List -->
                                 <button v-if="exp.image" @click.stop="openImageModal(exp.image)" class="text-stone/30 hover:text-clover-500 transition text-xs">
                                     <i class="fa-regular fa-image"></i>
                                 </button>
@@ -421,7 +368,7 @@
                     </div>
                 </div>
 
-                <!-- Public Wallet Section (New) -->
+                <!-- Public Wallet Section -->
                 <div class="mt-8 bg-white rounded-[32px] p-6 shadow-card border border-clover-100/50">
                     <div class="flex items-center mb-6">
                         <div class="w-10 h-10 rounded-full bg-clover-100 text-clover-500 flex items-center justify-center mr-3 shadow-inner">
@@ -433,7 +380,6 @@
                         </div>
                     </div>
 
-                    <!-- 1. Wallet Status & Settings -->
                     <div class="bg-gradient-to-br from-stone-50 to-clover-50/30 rounded-2xl p-5 mb-6 border border-stone/5">
                         <div class="flex justify-between items-end mb-1">
                             <span class="text-[10px] text-stone font-bold tracking-widest uppercase">目前餘額 (Balance)</span>
@@ -460,7 +406,7 @@
                                     <button @click="publicFundCurrency = 'JPY'" :class="publicFundCurrency === 'JPY' ? 'bg-clover-100 text-clover-600' : 'text-stone/50 hover:bg-stone/5'" class="px-2 py-1.5 rounded-md text-[10px] font-bold transition-all">JPY</button>
                                     <button @click="publicFundCurrency = 'TWD'" :class="publicFundCurrency === 'TWD' ? 'bg-clover-100 text-clover-600' : 'text-stone/50 hover:bg-stone/5'" class="px-2 py-1.5 rounded-md text-[10px] font-bold transition-all">TWD</button>
                                 </div>
-                                <input v-model.number="publicFundInput" type="number" placeholder="金額..." class="flex-1 min-w-0 bg-white border-none rounded-xl px-3 py-2 text-sm text-sumi outline-none focus:ring-1 focus:ring-clover-300 font-mono shadow-sm">
+                                <input v-model.number="publicFundInput" type="number" placeholder="金額..." class="flex-1 min-w-0 bg-white border-none rounded-xl px-3 py-2 text-sm text-sumi outline-none focus:ring-1 focus:ring-clover-300 font-mono shadow-sm" enterkeyhint="done">
                                 <button @click="updatePublicFund" class="bg-sumi text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-clover-500 transition shadow-lg shadow-stone/20"><i class="fa-solid fa-check text-xs"></i></button>
                             </div>
                             <div v-if="publicFundCurrency === 'JPY' && publicFundInput" class="text-right mt-1 px-1">
@@ -469,22 +415,19 @@
                         </div>
                     </div>
 
-                    <!-- 2. Add Public Expense (Updated) -->
                     <div class="mb-6 relative">
                         <h4 class="text-[10px] text-stone tracking-widest uppercase font-bold mb-3 pl-2 border-l-2 border-camel-300">新增公費支出 (Add Expense)</h4>
                         <div class="space-y-3">
                             <input v-model="newPublicExpense.name" placeholder="項目名稱 (Item)..." class="w-full bg-stone/5 border-none rounded-2xl px-4 py-3 text-sm text-sumi outline-none focus:bg-white focus:ring-1 focus:ring-camel-300 transition focus:shadow-sm placeholder-stone/40">
                             
-                            <!-- Amount & Currency Toggle -->
                             <div class="flex space-x-2 items-start">
                                 <div class="flex flex-col space-y-1">
                                     <button @click="newPublicExpense.currency = 'JPY'" :class="newPublicExpense.currency === 'JPY' ? 'bg-camel-400 text-white shadow-md' : 'bg-stone/10 text-stone hover:bg-stone/20'" class="px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all">JPY</button>
                                     <button @click="newPublicExpense.currency = 'TWD'" :class="newPublicExpense.currency === 'TWD' ? 'bg-camel-400 text-white shadow-md' : 'bg-stone/10 text-stone hover:bg-stone/20'" class="px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all">TWD</button>
                                 </div>
                                 <div class="flex-1 relative">
-                                    <input v-model.number="newPublicExpense.inputAmount" type="number" placeholder="金額..." class="w-full bg-stone/5 border-none rounded-2xl px-4 py-3 pl-8 text-sm text-sumi outline-none focus:bg-white focus:ring-1 focus:ring-camel-300 transition font-mono focus:shadow-sm placeholder-stone/40">
+                                    <input v-model.number="newPublicExpense.inputAmount" type="number" placeholder="金額..." class="w-full bg-stone/5 border-none rounded-2xl px-4 py-3 pl-8 text-sm text-sumi outline-none focus:bg-white focus:ring-1 focus:ring-camel-300 transition font-mono focus:shadow-sm placeholder-stone/40" enterkeyhint="done">
                                     <span class="absolute left-3.5 top-3.5 text-stone/40 text-xs font-bold">{{ newPublicExpense.currency === 'JPY' ? '¥' : '$' }}</span>
-                                    <!-- JPY Conversion Preview -->
                                     <div v-if="newPublicExpense.currency === 'JPY' && newPublicExpense.inputAmount" class="absolute right-3 top-3.5 text-[10px] text-stone font-mono">
                                         ≈ NT$ {{ Math.round(newPublicExpense.inputAmount * exchangeRate).toLocaleString() }}
                                     </div>
@@ -492,7 +435,6 @@
                                 <button @click="addPublicExpense" class="bg-camel-400 text-white w-12 h-[46px] rounded-2xl text-xs font-bold shadow-lg shadow-camel-100 hover:bg-camel-500 hover:scale-105 transition flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-plus text-sm"></i></button>
                             </div>
 
-                            <!-- Public Receipt Image Upload -->
                             <div class="flex items-center space-x-3 pt-1">
                                 <div v-if="newPublicExpense.image" class="relative w-10 h-10 rounded-lg overflow-hidden group shadow-sm border border-stone/10">
                                     <img :src="newPublicExpense.image" class="w-full h-full object-cover">
@@ -507,7 +449,6 @@
                         </div>
                     </div>
 
-                    <!-- 3. Expense List -->
                     <div>
                         <h4 class="text-[10px] text-stone tracking-widest uppercase font-bold mb-3 pl-2 border-l-2 border-stone/30 flex justify-between items-center">
                             <span>支出明細 (History)</span>
@@ -526,7 +467,6 @@
                                 </div>
                                 <div class="flex items-center space-x-3">
                                     <span class="font-mono text-sm font-bold text-sumi">NT$ {{ Math.round(item.amount).toLocaleString() }}</span>
-                                    <!-- Detail Icon -->
                                     <button v-if="item.image" @click.stop="openImageModal(item.image)" class="w-7 h-7 rounded-full bg-white text-stone/40 hover:text-clover-500 hover:shadow-sm flex items-center justify-center transition">
                                         <i class="fa-regular fa-image text-[10px]"></i>
                                     </button>
@@ -536,12 +476,10 @@
                         </div>
                     </div>
                 </div>
-
             </div>
 
             <!-- Tab: Map -->
             <div v-if="currentTab === 'map'" class="pb-32 animate-fade-in-up space-y-6 pt-2">
-                <!-- (Map content remains the same) -->
                 <div>
                     <div class="flex justify-between items-end px-2 mb-3">
                          <h3 class="text-[10px] text-stone tracking-widest uppercase font-bold">常用位置地圖</h3>
@@ -607,7 +545,6 @@
 
             <!-- Tab: Broadcast -->
             <div v-if="currentTab === 'broadcast'" class="h-full flex flex-col pb-4 animate-fade-in-up">
-                 <!-- (Broadcast content remains the same) -->
                 <div class="flex-1 overflow-y-auto space-y-6 pb-4 pt-2 px-2" ref="msgContainer">
                     <div v-if="messages.length === 0" class="text-center py-32 opacity-30">
                         <i class="fa-regular fa-comments text-4xl mb-4 text-stone"></i>
@@ -632,7 +569,7 @@
                         <button v-for="m in members" :key="m" @click="msgUser = m" :class="msgUser === m ? 'bg-clover-300 text-white shadow-md shadow-clover-100' : 'bg-clover-50/50 text-stone hover:bg-clover-50'" class="py-2 rounded-xl text-[10px] font-medium transition-all duration-200 truncate">{{ m }}</button>
                     </div>
                     <div class="flex flex-col space-y-3">
-                        <input v-model="msgText" placeholder="Write a message..." class="w-full bg-clover-50/50 rounded-2xl p-4 border border-transparent focus:border-clover-100 focus:bg-white transition-all duration-300 outline-none text-sm text-sumi placeholder-stone/50" @keyup.enter="sendMessage">
+                        <input v-model="msgText" placeholder="Write a message..." class="w-full bg-clover-50/50 rounded-2xl p-4 border border-transparent focus:border-clover-100 focus:bg-white transition-all duration-300 outline-none text-sm text-sumi placeholder-stone/50" @keyup.enter="sendMessage" enterkeyhint="send">
                         <button @click="sendMessage" class="w-full py-3 bg-clover-300 text-white rounded-2xl hover:bg-clover-400 hover:shadow-lg hover:shadow-clover-200 transition flex items-center justify-center shadow-sm group">
                             <span class="text-[10px] font-bold tracking-widest mr-2 group-hover:mr-3 transition-all">SEND</span>
                             <i class="fa-solid fa-paper-plane text-xs"></i>
@@ -649,7 +586,6 @@
                         <span v-if="currentShoppingMember" class="text-clover-500 font-bold bg-clover-50 px-2 py-0.5 rounded-md">{{ currentShoppingMember }}</span>
                     </h2>
                     
-                    <!-- 1. 成員選擇區塊 (Member Filter) -->
                     <div class="mb-6 px-1">
                         <div class="grid grid-cols-4 gap-2">
                             <button v-for="member in members" :key="member" 
@@ -661,26 +597,21 @@
                         </div>
                     </div>
 
-                    <!-- List Content -->
                     <div v-if="filteredShoppingList.length === 0" class="flex flex-col items-center justify-center py-20 text-stone/30">
                         <i class="fa-solid fa-basket-shopping text-4xl mb-4 opacity-30 text-clover-300"></i>
                         <p class="font-light text-xs tracking-[0.2em]">EMPTY LIST</p>
                     </div>
 
-                    <!-- Modified Layout: Single Column, Larger Content -->
                     <div class="space-y-4 px-1 mb-8">
                         <div v-for="item in filteredShoppingList" :key="item.id" class="bg-white rounded-[24px] p-5 shadow-card hover:shadow-soft transition-all duration-300 group relative flex flex-col">
-                            <!-- Owner Tag -->
                             <div v-if="item.owner" class="absolute top-4 left-4 z-10">
                                 <span class="bg-white/90 backdrop-blur-md text-clover-600 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">{{ item.owner }}</span>
                             </div>
 
-                            <!-- Link Icon -->
                             <a v-if="item.link" :href="item.link" target="_blank" class="absolute top-4 right-4 z-10 w-9 h-9 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-clover-500 shadow-sm hover:bg-clover-500 hover:text-white transition-colors" @click.stop>
                                 <i class="fa-solid fa-link text-sm"></i>
                             </a>
 
-                            <!-- Image (Larger) -->
                             <div class="relative w-full aspect-[4/3] mb-4 rounded-2xl overflow-hidden bg-clover-50/50 border border-stone/5">
                                 <img v-if="item.image" :src="item.image" class="w-full h-full object-cover" alt="item">
                                 <div v-else class="w-full h-full flex items-center justify-center text-clover-200">
@@ -688,7 +619,6 @@
                                 </div>
                             </div>
                             
-                            <!-- Content (Larger) -->
                             <h3 class="font-bold text-sumi text-lg mb-2 px-1">{{ item.name }}</h3>
                             <p class="text-sm text-stone px-1 leading-7 whitespace-pre-wrap">{{ item.description }}</p>
                             
@@ -699,7 +629,6 @@
                         </div>
                     </div>
                     
-                    <!-- 3. 新增物品按鈕 (Page Break Center) -->
                     <div class="flex justify-center pb-8 pt-4 border-t border-dashed border-stone/10">
                          <button @click="openShoppingModal" class="flex items-center space-x-2 bg-clover-300 text-white py-3 px-8 rounded-full shadow-lg shadow-clover-200 hover:bg-clover-400 hover:scale-105 transition-all duration-300 group">
                             <i class="fa-solid fa-plus text-sm group-hover:rotate-90 transition-transform"></i>
@@ -713,7 +642,6 @@
 
         <!-- Modals -->
         <div v-if="showTrafficModal" class="absolute inset-0 bg-sumi/10 backdrop-blur-[2px] z-50 flex items-end sm:items-center justify-center">
-            <!-- (Traffic Modal Content) -->
             <div class="bg-white w-full sm:w-[400px] sm:rounded-[32px] rounded-t-[32px] p-8 shadow-2xl animate-fade-in-up max-h-[90vh] overflow-y-auto">
                 <div class="flex justify-between items-center mb-8">
                     <h3 class="text-lg font-bold text-sumi tracking-wide flex items-center">
@@ -744,7 +672,6 @@
         </div>
         
         <div v-if="showLocationModal" class="absolute inset-0 bg-sumi/10 backdrop-blur-[2px] z-50 flex items-end sm:items-center justify-center p-6">
-            <!-- (Location Modal Content) -->
              <div class="bg-white w-full max-w-xs rounded-[32px] p-8 shadow-2xl animate-fade-in-up">
                  <div class="flex justify-between items-center mb-6">
                     <h3 class="text-lg font-bold text-sumi tracking-wide">{{ isEditingLocation ? 'Edit Location' : 'Add Location' }}</h3>
@@ -759,7 +686,6 @@
             </div>
         </div>
 
-        <!-- Shopping Modal -->
         <div v-if="showShoppingModal" class="absolute inset-0 bg-sumi/10 backdrop-blur-[2px] z-50 flex items-end sm:items-center justify-center p-6">
             <div class="bg-white w-full max-w-xs rounded-[32px] p-8 shadow-2xl animate-fade-in-up">
                  <div class="flex justify-between items-center mb-6">
@@ -767,7 +693,6 @@
                     <button @click="showShoppingModal = false" class="w-8 h-8 rounded-full bg-clover-50 text-stone hover:bg-stone/10 flex items-center justify-center transition"><i class="fa-solid fa-times"></i></button>
                 </div>
                 <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-1 -mr-1">
-                    <!-- Image Upload -->
                     <div class="relative w-full aspect-video bg-clover-50 rounded-2xl overflow-hidden border-2 border-dashed border-clover-200 hover:border-clover-300 transition group cursor-pointer" @click="$refs.fileInput.click()">
                         <input type="file" ref="fileInput" accept="image/*" class="hidden" @change="handleImageUpload">
                         <img v-if="shoppingModalData.image" :src="shoppingModalData.image" class="w-full h-full object-cover">
@@ -779,7 +704,6 @@
                     
                     <input v-model="shoppingModalData.name" type="text" placeholder="物品名稱 (Name)" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm outline-none focus:ring-2 focus:ring-clover-100 text-sumi">
                     
-                    <!-- Link Input (New) -->
                     <div class="relative">
                         <i class="fa-solid fa-link absolute left-4 top-4 text-stone/40 text-xs"></i>
                         <input v-model="shoppingModalData.link" type="text" placeholder="參考連結 (Link)" class="w-full bg-clover-50 border-none rounded-2xl p-4 pl-10 text-sm outline-none focus:ring-2 focus:ring-clover-100 text-clover-600 placeholder-stone/40">
@@ -787,7 +711,6 @@
 
                     <textarea v-model="shoppingModalData.description" placeholder="內容描述 (Description)" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm outline-none focus:ring-2 focus:ring-clover-100 text-sumi h-24 resize-none"></textarea>
                     
-                    <!-- Owner Selection in Modal -->
                     <div>
                         <label class="text-[10px] font-bold text-stone tracking-widest block mb-2 pl-1">歸屬成員 (OWNER)</label>
                         <div class="grid grid-cols-4 gap-2">
@@ -809,11 +732,9 @@
 </div>
 
 <script type="module">
-// 1. Import Firebase Modules
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getDatabase, ref as dbRef, set, onValue, push, update, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
-// 2. Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDRtLqLIPtLB7WmGqwbS4YjRHpDRF8Rv0g",
   authDomain: "nagoya-snow-tour.firebaseapp.com",
@@ -825,15 +746,13 @@ const firebaseConfig = {
   measurementId: "G-PS3ZL41FYT"
 };
 
-// 3. Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-
-// Get Vue from global (loaded via script tag)
 const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
 
 createApp({
     setup() {
+        const isLoading = ref(true);
         const currentTab = ref('traffic');
         const currentDay = ref(1);
         const days = ref([1, 2, 3, 4, 5, 6, 7]); 
@@ -843,152 +762,115 @@ createApp({
         const toast = ref({ show: false, message: '', icon: '' });
         const confirmModal = ref({ show: false, title: '', message: '', targetId: null, targetType: '' });
         const fixedMembers = ['明學', '嘉旺', '郡哲', '柏翰', '聿玄', '常駐', '厚仁', '婉瑜'];
-        
-        // Image Viewer State
         const showImageModal = ref(false);
         const viewImageSrc = ref('');
-        const openImageModal = (src) => {
-            viewImageSrc.value = src;
-            showImageModal.value = true;
-        };
-
-        const cityCoords = {
-            'Nagoya': { lat: 35.1815, lon: 136.9066 },
-            'Nagano': { lat: 36.6485, lon: 138.1942 },
-            'Kanazawa': { lat: 36.5613, lon: 136.6562 },
-            'Takayama': { lat: 36.1407, lon: 137.2595 },
-            'Matsumoto': { lat: 36.2380, lon: 137.9685 },
-            'Shirakawa': { lat: 36.2566, lon: 136.9043 },
-        };
-
-        // Reactive State
+        const cityCoords = { 'Nagoya': { lat: 35.1815, lon: 136.9066 }, 'Nagano': { lat: 36.6485, lon: 138.1942 }, 'Kanazawa': { lat: 36.5613, lon: 136.6562 }, 'Takayama': { lat: 36.1407, lon: 137.2595 }, 'Matsumoto': { lat: 36.2380, lon: 137.9685 }, 'Shirakawa': { lat: 36.2566, lon: 136.9043 } };
+        
         const trafficList = ref([]);
         const members = ref([...fixedMembers]);
         const expenses = ref([]);
         const messages = ref([]);
         const locations = ref([]);
         const exchangeRate = ref(0.215); 
-        
-        // Shopping List State
         const shoppingList = ref([]);
         const showShoppingModal = ref(false);
         const isEditingShopping = ref(false);
         const editingShoppingId = ref(null);
         const shoppingModalData = ref({ name: '', description: '', image: '', owner: '', link: '' });
-        const currentShoppingMember = ref(null); // Filter state
-
-        // Public Wallet State
+        const currentShoppingMember = ref(null);
         const publicExpenses = ref([]);
         const publicFundTotal = ref(0);
         const publicFundInput = ref('');
         const publicFundCurrency = ref('JPY');
-        const newPublicExpense = ref({ name: '', inputAmount: '', currency: 'TWD', image: '' }); // Updated structure
-
+        const newPublicExpense = ref({ name: '', inputAmount: '', currency: 'TWD', image: '' });
         const currencyMode = ref('JPY'); 
         const weatherCity = ref('Nagoya');
         const weatherData = ref({});
-
-        const newExpense = ref({ description: '', inputAmount: '', payer: '', image: '' }); // Added image field
+        const newExpense = ref({ description: '', inputAmount: '', payer: '', image: '' });
         const trafficModalData = ref({ time: '09:00', endTime: '', type: 'train', destination: '', description: '', url: '', ticketUrl: '' }); 
         const msgText = ref('');
         const msgUser = ref(fixedMembers[0]);
         const msgContainer = ref(null);
         const selectedPayerForDetail = ref(fixedMembers[0]);
-
         const locationModalData = ref({ name: '', description: '', url: '' });
         const showLocationModal = ref(false);
         const isEditingLocation = ref(false);
         const editingLocationId = ref(null);
 
-        const showToast = (msg, type = 'success') => {
-            toast.value = { show: true, message: msg, icon: type === 'error' ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-clover' };
-            setTimeout(() => { toast.value.show = false; }, 3000);
-        };
-
+        const showToast = (msg, type = 'success') => { toast.value = { show: true, message: msg, icon: type === 'error' ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-clover' }; setTimeout(() => { toast.value.show = false; }, 3000); };
+        const openImageModal = (src) => { viewImageSrc.value = src; showImageModal.value = true; };
+        
         const fetchRealTimeExchangeRate = async () => {
             try {
                 const res = await fetch('https://api.exchangerate-api.com/v4/latest/JPY');
                 const data = await res.json();
-                if(data && data.rates && data.rates.TWD) {
-                    exchangeRate.value = parseFloat(data.rates.TWD.toFixed(3));
-                    showToast('即時匯率已更新'); 
-                }
-            } catch(e) { 
-                console.error('匯率更新失敗:', e);
-            }
+                if(data && data.rates && data.rates.TWD) exchangeRate.value = parseFloat(data.rates.TWD.toFixed(3));
+            } catch(e) { console.error('匯率失敗:', e); }
+        };
+
+        const processImage = (file, callback) => {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 500;
+                    const scaleSize = MAX_WIDTH / img.width;
+                    const width = (img.width > MAX_WIDTH) ? MAX_WIDTH : img.width;
+                    const height = (img.width > MAX_WIDTH) ? img.height * scaleSize : img.height;
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    callback(canvas.toDataURL('image/jpeg', 0.5));
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
         };
 
         onMounted(() => {
-            onValue(dbRef(db, 'traffic'), (snapshot) => {
-                const val = snapshot.val();
-                trafficList.value = val ? (Array.isArray(val) ? val : Object.values(val)) : []; 
-            });
-            onValue(dbRef(db, 'expenses'), (snapshot) => {
-                const val = snapshot.val();
-                expenses.value = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
-            });
-            onValue(dbRef(db, 'messages'), (snapshot) => {
-                const val = snapshot.val();
-                messages.value = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
-            });
-            onValue(dbRef(db, 'locations'), (snapshot) => {
-                const val = snapshot.val();
-                locations.value = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
-            });
-             onValue(dbRef(db, 'shopping_list'), (snapshot) => {
-                const val = snapshot.val();
-                shoppingList.value = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
-            });
-            onValue(dbRef(db, 'exchangeRate'), (snapshot) => {
-                const val = snapshot.val();
-                if(val) exchangeRate.value = parseFloat(val);
-            });
-
-            // Public Wallet Listeners
-            onValue(dbRef(db, 'public_expenses'), (snapshot) => {
-                const val = snapshot.val();
-                publicExpenses.value = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
-            });
-            onValue(dbRef(db, 'public_fund_total'), (snapshot) => {
-                const val = snapshot.val();
-                if(val) publicFundTotal.value = parseFloat(val);
-            });
+            let loadCheck = 0;
+            const checkLoad = () => { loadCheck++; if(loadCheck >= 2) isLoading.value = false; };
+            
+            onValue(dbRef(db, 'traffic'), (s) => { trafficList.value = s.val() || []; checkLoad(); });
+            onValue(dbRef(db, 'expenses'), (s) => { expenses.value = s.val() || []; checkLoad(); });
+            onValue(dbRef(db, 'messages'), (s) => { messages.value = s.val() || []; nextTick(() => { if (msgContainer.value) msgContainer.value.scrollTop = msgContainer.value.scrollHeight; }); });
+            onValue(dbRef(db, 'locations'), (s) => { locations.value = s.val() || []; });
+            onValue(dbRef(db, 'shopping_list'), (s) => { shoppingList.value = s.val() || []; });
+            onValue(dbRef(db, 'exchangeRate'), (s) => { if(s.val()) exchangeRate.value = parseFloat(s.val()); });
+            onValue(dbRef(db, 'public_expenses'), (s) => { publicExpenses.value = s.val() || []; });
+            onValue(dbRef(db, 'public_fund_total'), (s) => { if(s.val()) publicFundTotal.value = parseFloat(s.val()); });
+            
+            // Fallback: 3秒後強制關閉 Loading，避免網路慢卡死
+            setTimeout(() => isLoading.value = false, 3000);
 
             fetchRealTimeExchangeRate();
             fetchWeather();
         });
 
-        watch(trafficList, (val) => { set(dbRef(db, 'traffic'), val); }, { deep: true });
-        watch(expenses, (val) => { set(dbRef(db, 'expenses'), val); }, { deep: true });
-        watch(messages, (val) => { set(dbRef(db, 'messages'), val); }, { deep: true });
-        watch(locations, (val) => { set(dbRef(db, 'locations'), val); }, { deep: true });
-        watch(shoppingList, (val) => { set(dbRef(db, 'shopping_list'), val); }, { deep: true });
-        watch(exchangeRate, (val) => { set(dbRef(db, 'exchangeRate'), val); });
-        
-        // Public Wallet Watchers
-        watch(publicExpenses, (val) => { set(dbRef(db, 'public_expenses'), val); }, { deep: true });
+        watch(trafficList, (v) => set(dbRef(db, 'traffic'), v), { deep: true });
+        watch(expenses, (v) => set(dbRef(db, 'expenses'), v), { deep: true });
+        watch(messages, (v) => set(dbRef(db, 'messages'), v), { deep: true });
+        watch(locations, (v) => set(dbRef(db, 'locations'), v), { deep: true });
+        watch(shoppingList, (v) => set(dbRef(db, 'shopping_list'), v), { deep: true });
+        watch(exchangeRate, (v) => set(dbRef(db, 'exchangeRate'), v));
+        watch(publicExpenses, (v) => set(dbRef(db, 'public_expenses'), v), { deep: true });
 
-        const filteredTraffic = computed(() => {
-            return trafficList.value.filter(item => item.day === currentDay.value).sort((a, b) => a.time.localeCompare(b.time));
-        });
+        const filteredTraffic = computed(() => trafficList.value.filter(item => item.day === currentDay.value).sort((a, b) => a.time.localeCompare(b.time)));
         const totalExpense = computed(() => expenses.value.reduce((sum, item) => sum + item.amount, 0));
-        const calculatedTWD = computed(() => {
-            if (!newExpense.value.inputAmount) return 0;
-            return currencyMode.value === 'JPY' ? Math.round(newExpense.value.inputAmount * exchangeRate.value) : Math.round(newExpense.value.inputAmount);
-        });
+        const calculatedTWD = computed(() => !newExpense.value.inputAmount ? 0 : (currencyMode.value === 'JPY' ? Math.round(newExpense.value.inputAmount * exchangeRate.value) : Math.round(newExpense.value.inputAmount)));
+        
         const debts = computed(() => {
             if (members.value.length === 0) return [];
-            let paid = {};
-            members.value.forEach(m => paid[m] = 0);
+            let paid = {}; members.value.forEach(m => paid[m] = 0);
             expenses.value.forEach(e => { if (paid[e.payer] !== undefined) paid[e.payer] += e.amount; });
             const perPerson = totalExpense.value / members.value.length;
             let balance = members.value.map(m => ({ name: m, val: paid[m] - perPerson }));
-            let result = [];
-            balance.sort((a, b) => a.val - b.val); 
+            let result = []; balance.sort((a, b) => a.val - b.val); 
             let i = 0, j = balance.length - 1; 
             while (i < j) {
-                let debtor = balance[i];
-                let creditor = balance[j];
+                let debtor = balance[i], creditor = balance[j];
                 if (Math.abs(debtor.val) < 1) { i++; continue; }
                 if (Math.abs(creditor.val) < 1) { j--; continue; }
                 let amount = Math.min(Math.abs(debtor.val), creditor.val);
@@ -998,42 +880,15 @@ createApp({
             }
             return result;
         });
-        const payerExpenses = computed(() => {
-            if (!selectedPayerForDetail.value) return [];
-            return expenses.value.filter(e => e.payer === selectedPayerForDetail.value).slice().reverse();
-        });
-        const payerTotal = computed(() => {
-            return payerExpenses.value.reduce((sum, item) => sum + item.amount, 0);
-        });
 
-        // Public Wallet Computeds
+        const payerExpenses = computed(() => !selectedPayerForDetail.value ? [] : expenses.value.filter(e => e.payer === selectedPayerForDetail.value).slice().reverse());
+        const payerTotal = computed(() => payerExpenses.value.reduce((sum, item) => sum + item.amount, 0));
         const totalPublicSpent = computed(() => publicExpenses.value.reduce((sum, item) => sum + item.amount, 0));
         const remainingPublicFund = computed(() => publicFundTotal.value - totalPublicSpent.value);
-        const publicFundPercentage = computed(() => {
-            if(publicFundTotal.value <= 0) return 0;
-            let p = (remainingPublicFund.value / publicFundTotal.value) * 100;
-            return Math.max(0, Math.min(100, p));
-        });
+        const publicFundPercentage = computed(() => publicFundTotal.value <= 0 ? 0 : Math.max(0, Math.min(100, (remainingPublicFund.value / publicFundTotal.value) * 100)));
+        const filteredShoppingList = computed(() => !currentShoppingMember.value ? shoppingList.value : shoppingList.value.filter(item => item.owner === currentShoppingMember.value));
 
-        // Shopping List Filter Logic
-        const toggleShoppingMember = (member) => {
-            if (currentShoppingMember.value === member) {
-                currentShoppingMember.value = null; // Toggle off
-            } else {
-                currentShoppingMember.value = member;
-            }
-        };
-        const filteredShoppingList = computed(() => {
-            if (!currentShoppingMember.value) return shoppingList.value;
-            return shoppingList.value.filter(item => item.owner === currentShoppingMember.value);
-        });
-
-        const askDelete = (type, id) => {
-            confirmModal.value = { show: true, title: 'Delete Item?', message: 'Are you sure?', targetId: id, targetType: type };
-        };
-        const askReset = () => {
-             confirmModal.value = { show: true, title: 'Clear Database?', message: 'All data will be deleted from Firebase.', targetId: null, targetType: 'reset' };
-        };
+        const askDelete = (type, id) => { confirmModal.value = { show: true, title: 'Delete Item?', message: 'Are you sure?', targetId: id, targetType: type }; };
         const confirmAction = () => {
             const { targetType, targetId } = confirmModal.value;
             if (targetType === 'traffic') trafficList.value = trafficList.value.filter(x => x.id !== targetId);
@@ -1042,231 +897,62 @@ createApp({
             else if (targetType === 'location') locations.value = locations.value.filter(l => l.id !== targetId);
             else if (targetType === 'shopping') shoppingList.value = shoppingList.value.filter(l => l.id !== targetId);
             else if (targetType === 'publicExpense') publicExpenses.value = publicExpenses.value.filter(l => l.id !== targetId);
-            else if (targetType === 'reset') { set(dbRef(db), null); setTimeout(() => location.reload(), 1000); }
-            confirmModal.value.show = false;
-            showToast('Item deleted');
+            confirmModal.value.show = false; showToast('Item deleted');
         };
-        
+
+        const handleExpenseImage = (event) => processImage(event.target.files[0], (d) => newExpense.value.image = d);
+        const handlePublicImage = (event) => processImage(event.target.files[0], (d) => newPublicExpense.value.image = d);
+        const handleImageUpload = (event) => processImage(event.target.files[0], (d) => shoppingModalData.value.image = d);
+
         const openTrafficModal = () => { isEditingTraffic.value = false; editingTrafficId.value = null; trafficModalData.value = { time: '09:00', endTime: '', type: 'train', destination: '', description: '', url: '', ticketUrl: '' }; showTrafficModal.value = true; };
         const editTraffic = (item) => { isEditingTraffic.value = true; editingTrafficId.value = item.id; trafficModalData.value = { ...item }; showTrafficModal.value = true; };
         const saveTraffic = () => {
             if (!trafficModalData.value.destination) { showToast('Please enter destination', 'error'); return; }
-            if (isEditingTraffic.value) {
-                const idx = trafficList.value.findIndex(x => x.id === editingTrafficId.value);
-                if (idx !== -1) { trafficList.value[idx] = { ...trafficModalData.value, id: editingTrafficId.value, day: currentDay.value }; }
-            } else {
-                trafficList.value.push({ id: Date.now(), day: currentDay.value, ...trafficModalData.value });
-            }
+            if (isEditingTraffic.value) { const idx = trafficList.value.findIndex(x => x.id === editingTrafficId.value); if (idx !== -1) trafficList.value[idx] = { ...trafficModalData.value, id: editingTrafficId.value, day: currentDay.value }; } 
+            else trafficList.value.push({ id: Date.now(), day: currentDay.value, ...trafficModalData.value });
             showTrafficModal.value = false; showToast('Saved');
         };
-        const getTransportIcon = (type) => {
-            switch(type) {
-                case 'plane': return 'fa-solid fa-plane';
-                case 'train': return 'fa-solid fa-train';
-                case 'bus': return 'fa-solid fa-bus';
-                case 'taxi': return 'fa-solid fa-taxi';
-                case 'walk': return 'fa-solid fa-person-walking'; 
-                default: return 'fa-solid fa-diamond-turn-right';
-            }
-        };
+        const getTransportIcon = (t) => ({ 'plane': 'fa-solid fa-plane', 'train': 'fa-solid fa-train', 'bus': 'fa-solid fa-bus', 'taxi': 'fa-solid fa-taxi', 'walk': 'fa-solid fa-person-walking' }[t] || 'fa-solid fa-diamond-turn-right');
 
         const addExpense = () => {
             if (!newExpense.value.description || !newExpense.value.inputAmount || !newExpense.value.payer) { showToast('Missing info', 'error'); return; }
-            expenses.value.push({ 
-                description: newExpense.value.description, 
-                originalAmount: newExpense.value.inputAmount, 
-                originalCurrency: currencyMode.value, 
-                amount: calculatedTWD.value, 
-                payer: newExpense.value.payer, 
-                date: new Date().toLocaleDateString(),
-                image: newExpense.value.image || '' // Include image
-            });
-            newExpense.value.description = ''; 
-            newExpense.value.inputAmount = ''; 
-            newExpense.value.image = ''; // Reset image
+            expenses.value.push({ description: newExpense.value.description, originalAmount: newExpense.value.inputAmount, originalCurrency: currencyMode.value, amount: calculatedTWD.value, payer: newExpense.value.payer, date: new Date().toLocaleDateString(), image: newExpense.value.image || '' });
+            newExpense.value = { description: '', inputAmount: '', payer: newExpense.value.payer, image: '' }; 
             showToast('Expense added');
         };
         
-        // Handle Expense Image
-        const handleExpenseImage = (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800;
-                    const scaleSize = MAX_WIDTH / img.width;
-                    const width = (img.width > MAX_WIDTH) ? MAX_WIDTH : img.width;
-                    const height = (img.width > MAX_WIDTH) ? img.height * scaleSize : img.height;
-                    canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    newExpense.value.image = canvas.toDataURL('image/jpeg', 0.6);
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        };
-        
-        // Public Wallet Methods
-        const updatePublicFund = () => {
-            if(!publicFundInput.value) return;
-            let amount = publicFundInput.value;
-            if(publicFundCurrency.value === 'JPY') {
-                amount = Math.round(amount * exchangeRate.value);
-            }
-            set(dbRef(db, 'public_fund_total'), amount);
-            publicFundTotal.value = amount; // Optimistic update
-            publicFundInput.value = '';
-            showToast('公費總額已更新');
-        };
-
+        const updatePublicFund = () => { if(!publicFundInput.value) return; let amount = publicFundInput.value; if(publicFundCurrency.value === 'JPY') amount = Math.round(amount * exchangeRate.value); set(dbRef(db, 'public_fund_total'), amount); publicFundTotal.value = amount; publicFundInput.value = ''; showToast('Updated'); };
         const addPublicExpense = () => {
-            if(!newPublicExpense.value.name || !newPublicExpense.value.inputAmount) { showToast('請輸入完整資訊', 'error'); return; }
-            
-            // Calculate Amount
-            let finalAmount = newPublicExpense.value.inputAmount;
-            if(newPublicExpense.value.currency === 'JPY') {
-                finalAmount = Math.round(newPublicExpense.value.inputAmount * exchangeRate.value);
-            }
-
-            publicExpenses.value.push({
-                id: Date.now(),
-                name: newPublicExpense.value.name,
-                amount: parseFloat(finalAmount),
-                originalAmount: newPublicExpense.value.inputAmount,
-                originalCurrency: newPublicExpense.value.currency,
-                date: new Date().toLocaleDateString(),
-                image: newPublicExpense.value.image || ''
-            });
-            
-            // Reset
-            newPublicExpense.value = { name: '', inputAmount: '', currency: 'TWD', image: '' };
-            showToast('公費支出已記錄');
+            if(!newPublicExpense.value.name || !newPublicExpense.value.inputAmount) { showToast('Error', 'error'); return; }
+            let final = newPublicExpense.value.inputAmount; if(newPublicExpense.value.currency === 'JPY') final = Math.round(final * exchangeRate.value);
+            publicExpenses.value.push({ id: Date.now(), name: newPublicExpense.value.name, amount: parseFloat(final), originalAmount: newPublicExpense.value.inputAmount, originalCurrency: newPublicExpense.value.currency, date: new Date().toLocaleDateString(), image: newPublicExpense.value.image || '' });
+            newPublicExpense.value = { name: '', inputAmount: '', currency: 'TWD', image: '' }; showToast('Added');
         };
 
-        const handlePublicImage = (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800;
-                    const scaleSize = MAX_WIDTH / img.width;
-                    const width = (img.width > MAX_WIDTH) ? MAX_WIDTH : img.width;
-                    const height = (img.width > MAX_WIDTH) ? img.height * scaleSize : img.height;
-                    canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    newPublicExpense.value.image = canvas.toDataURL('image/jpeg', 0.6);
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        };
-        
-        const sendMessage = () => {
-            if (!msgText.value.trim()) return;
-            const now = new Date();
-            const timeString = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-            messages.value.push({ id: Date.now(), user: msgUser.value, text: msgText.value, time: timeString });
-            msgText.value = ''; nextTick(() => { if (msgContainer.value) msgContainer.value.scrollTop = msgContainer.value.scrollHeight; });
-        };
-
+        const sendMessage = () => { if (!msgText.value.trim()) return; messages.value.push({ id: Date.now(), user: msgUser.value, text: msgText.value, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); msgText.value = ''; };
         const openLocationModal = () => { isEditingLocation.value = false; locationModalData.value = { name: '', description: '', url: '' }; showLocationModal.value = true; };
         const editLocation = (loc) => { isEditingLocation.value = true; editingLocationId.value = loc.id; locationModalData.value = { ...loc }; showLocationModal.value = true; };
-        const saveLocation = () => {
-            if(!locationModalData.value.name) { showToast('Name required', 'error'); return; }
-            if(isEditingLocation.value) {
-                const idx = locations.value.findIndex(l => l.id === editingLocationId.value);
-                if(idx !== -1) locations.value[idx] = { ...locationModalData.value, id: editingLocationId.value };
-            } else {
-                locations.value.push({ id: Date.now(), ...locationModalData.value });
-            }
-            showLocationModal.value = false; showToast('Location saved');
-        };
+        const saveLocation = () => { if(!locationModalData.value.name) { showToast('Name required', 'error'); return; } if(isEditingLocation.value) { const idx = locations.value.findIndex(l => l.id === editingLocationId.value); if(idx !== -1) locations.value[idx] = { ...locationModalData.value, id: editingLocationId.value }; } else locations.value.push({ id: Date.now(), ...locationModalData.value }); showLocationModal.value = false; showToast('Saved'); };
 
-        // Shopping List Functions
-        const openShoppingModal = () => { 
-            isEditingShopping.value = false; 
-            // Default owner to currently selected filter if available, else first member
-            const defaultOwner = currentShoppingMember.value || members.value[0];
-            shoppingModalData.value = { name: '', description: '', image: '', owner: defaultOwner, link: '' }; 
-            showShoppingModal.value = true; 
-        };
+        const toggleShoppingMember = (m) => currentShoppingMember.value = currentShoppingMember.value === m ? null : m;
+        const openShoppingModal = () => { isEditingShopping.value = false; shoppingModalData.value = { name: '', description: '', image: '', owner: currentShoppingMember.value || members.value[0], link: '' }; showShoppingModal.value = true; };
         const editShopping = (item) => { isEditingShopping.value = true; editingShoppingId.value = item.id; shoppingModalData.value = { ...item }; showShoppingModal.value = true; };
-        
-        const handleImageUpload = (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800;
-                    const scaleSize = MAX_WIDTH / img.width;
-                    const width = (img.width > MAX_WIDTH) ? MAX_WIDTH : img.width;
-                    const height = (img.width > MAX_WIDTH) ? img.height * scaleSize : img.height;
-                    canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    shoppingModalData.value.image = canvas.toDataURL('image/jpeg', 0.6);
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        };
+        const saveShoppingItem = () => { if(!shoppingModalData.value.name) { showToast('Name required', 'error'); return; } if(isEditingShopping.value) { const idx = shoppingList.value.findIndex(l => l.id === editingShoppingId.value); if(idx !== -1) shoppingList.value[idx] = { ...shoppingModalData.value, id: editingShoppingId.value }; } else shoppingList.value.push({ id: Date.now(), ...shoppingModalData.value }); showShoppingModal.value = false; showToast('Saved'); };
 
-        const saveShoppingItem = () => {
-            if(!shoppingModalData.value.name) { showToast('Item name required', 'error'); return; }
-            if(!shoppingModalData.value.owner) { showToast('Owner required', 'error'); return; }
-            if(isEditingShopping.value) {
-                const idx = shoppingList.value.findIndex(l => l.id === editingShoppingId.value);
-                if(idx !== -1) shoppingList.value[idx] = { ...shoppingModalData.value, id: editingShoppingId.value };
-            } else {
-                shoppingList.value.push({ id: Date.now(), ...shoppingModalData.value });
-            }
-            showShoppingModal.value = false;
-            showToast('Item saved');
-        };
-
-        const fetchWeather = async () => {
-            const coords = cityCoords[weatherCity.value];
-            if(!coords) return;
-            try {
-                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo`);
-                weatherData.value = await res.json();
-            } catch(e) { console.error(e); }
-        };
+        const fetchWeather = async () => { const coords = cityCoords[weatherCity.value]; if(!coords) return; try { const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo`); weatherData.value = await res.json(); } catch(e) {} };
         const getWeatherDay = (idx) => { const d = new Date(); d.setDate(d.getDate() + idx); return ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()]; };
         const getWeatherDate = (idx) => { const d = new Date(); d.setDate(d.getDate() + idx); return `${d.getMonth()+1}/${d.getDate()}`; };
-        const getWeatherIcon = (code) => { if(code === 0) return 'fa-solid fa-sun'; if(code <= 3) return 'fa-solid fa-cloud-sun'; if(code <= 48) return 'fa-solid fa-smog'; if(code <= 67) return 'fa-solid fa-cloud-rain'; if(code <= 77) return 'fa-regular fa-snowflake'; return 'fa-solid fa-cloud'; };
+        const getWeatherIcon = (c) => (c===0?'fa-solid fa-sun':(c<=3?'fa-solid fa-cloud-sun':(c<=48?'fa-solid fa-smog':(c<=67?'fa-solid fa-cloud-rain':(c<=77?'fa-regular fa-snowflake':'fa-solid fa-cloud')))));
+
+        const exportToCSV = () => {
+            let csv = "data:text/csv;charset=utf-8,\uFEFFDate,Payer,Item,Amount(TWD)\n";
+            expenses.value.forEach(r => csv += `${r.date},${r.payer},"${r.description}",${r.amount}\n`);
+            const link = document.createElement("a"); link.setAttribute("href", encodeURI(csv)); link.setAttribute("download", "expenses.csv");
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        };
 
         return {
-            currentTab, currentDay, days,
-            members, expenses, newExpense, totalExpense, debts, addExpense,
-            messages, msgText, msgUser, sendMessage, msgContainer,
-            askDelete, askReset,
-            exchangeRate, currencyMode, calculatedTWD,
-            trafficList, filteredTraffic, showTrafficModal, trafficModalData, openTrafficModal, saveTraffic, editTraffic, getTransportIcon, isEditingTraffic,
-            toast, confirmModal, confirmAction,
-            selectedPayerForDetail, payerExpenses, payerTotal,
-            locations, showLocationModal, locationModalData, openLocationModal, editLocation, saveLocation, isEditingLocation,
-            shoppingList, showShoppingModal, shoppingModalData, openShoppingModal, editShopping, saveShoppingItem, isEditingShopping, handleImageUpload, currentShoppingMember, toggleShoppingMember, filteredShoppingList,
-            weatherCity, weatherData, fetchWeather, getWeatherDay, getWeatherDate, getWeatherIcon,
-            
-            // Public Wallet Exports
-            publicExpenses, publicFundTotal, publicFundInput, publicFundCurrency, newPublicExpense,
-            updatePublicFund, addPublicExpense, totalPublicSpent, remainingPublicFund, publicFundPercentage,
-            handlePublicImage,
-            
-            // Image Viewer
-            showImageModal, viewImageSrc, openImageModal, handleExpenseImage
+            isLoading, currentTab, currentDay, days, members, expenses, newExpense, totalExpense, debts, addExpense, messages, msgText, msgUser, sendMessage, msgContainer, askDelete, confirmModal, confirmAction, exchangeRate, currencyMode, calculatedTWD, trafficList, filteredTraffic, showTrafficModal, trafficModalData, openTrafficModal, saveTraffic, editTraffic, getTransportIcon, isEditingTraffic, toast, selectedPayerForDetail, payerExpenses, payerTotal, locations, showLocationModal, locationModalData, openLocationModal, editLocation, saveLocation, isEditingLocation, shoppingList, showShoppingModal, shoppingModalData, openShoppingModal, editShopping, saveShoppingItem, isEditingShopping, handleImageUpload, currentShoppingMember, toggleShoppingMember, filteredShoppingList, weatherCity, weatherData, fetchWeather, getWeatherDay, getWeatherDate, getWeatherIcon, publicExpenses, publicFundTotal, publicFundInput, publicFundCurrency, newPublicExpense, updatePublicFund, addPublicExpense, totalPublicSpent, remainingPublicFund, publicFundPercentage, handlePublicImage, handleExpenseImage, showImageModal, viewImageSrc, openImageModal, exportToCSV
         };
     }
 }).mount('#app');
