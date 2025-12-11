@@ -2,26 +2,20 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <!-- 加入 viewport-fit=cover 以適配 iPhone 瀏海屏，並禁止縮放 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Nagoya Trip 🍀 (Firebase Sync)</title>
+    <title>Nagoya Trip 🍀</title>
     
-    <!-- =========== PWA 設定 =========== -->
+    <!-- PWA Setup -->
     <link rel="icon" type="image/png" href="image2.png">
     <link rel="apple-touch-icon" href="image2.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Nagoya Trip">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#F5F9F6">
 
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Vue.js 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts: Noto Sans JP -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
     
     <script>
@@ -44,48 +38,14 @@
             }
         }
     </script>
-
     <style>
-        body {
-            background-color: #F5F9F6;
-            font-family: 'Noto Sans JP', sans-serif;
-            touch-action: manipulation; 
-            color: #444444;
-            overscroll-behavior-y: none; /* 防止 iOS 回彈 */
-        }
+        body { background-color: #F5F9F6; font-family: 'Noto Sans JP', sans-serif; touch-action: manipulation; color: #444444; overscroll-behavior-y: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        .app-container {
-            max-width: 430px;
-            margin: 0 auto;
-            background: #FFFEFA;
-            min-height: 100vh;
-            min-height: 100dvh; /* Mobile Viewport Fix */
-            position: relative;
-            box-shadow: 0 20px 60px -15px rgba(94, 156, 107, 0.15);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-        @media (min-width: 640px) {
-            .app-container {
-                min-height: 90vh;
-                margin-top: 5vh;
-                margin-bottom: 5vh;
-                border-radius: 48px;
-                height: 90vh;
-                border: 8px solid #fff;
-            }
-        }
-        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
-        .fade-enter-from, .fade-leave-to { opacity: 0; }
-        
-        .toast-enter-active, .toast-leave-active { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(-20px) scale(0.95); }
-
+        .app-container { max-width: 430px; margin: 0 auto; background: #FFFEFA; min-height: 100dvh; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+        @media (min-width: 640px) { .app-container { min-height: 90vh; margin-top: 5vh; margin-bottom: 5vh; border-radius: 48px; height: 90vh; border: 8px solid #fff; } }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; } .fade-enter-from, .fade-leave-to { opacity: 0; }
+        .toast-enter-active, .toast-leave-active { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); } .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(-20px) scale(0.95); }
         .timeline-line { background: linear-gradient(to bottom, #CDE5D2 0%, #CDE5D2 50%, transparent 100%); }
-        ::selection { background: #CDE5D2; color: #467A51; }
     </style>
 </head>
 <body>
@@ -93,10 +53,24 @@
 <div id="app">
     <div class="app-container font-sans">
         
-        <!-- Loading Screen (New) -->
+        <!-- Loading -->
         <div v-if="isLoading" class="absolute inset-0 z-[300] bg-washi/95 backdrop-blur-sm flex flex-col items-center justify-center transition-opacity duration-500">
             <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-clover-500 mb-4 shadow-clover"></div>
             <p class="text-xs text-clover-600 tracking-[0.3em] font-bold animate-pulse">LOADING</p>
+        </div>
+
+        <!-- Identity Modal (New: User Selection) -->
+        <div v-if="!currentUser && !isLoading" class="absolute inset-0 z-[250] bg-sumi/90 backdrop-blur-md flex items-center justify-center p-6 animate-fade-in-up">
+            <div class="bg-white w-full max-w-xs rounded-[32px] p-8 text-center shadow-2xl">
+                <div class="w-16 h-16 rounded-full bg-clover-100 text-clover-500 mx-auto flex items-center justify-center mb-4 text-2xl animate-bounce-in">
+                    <i class="fa-solid fa-user-astronaut"></i>
+                </div>
+                <h3 class="text-xl font-bold text-sumi mb-2">Who are you?</h3>
+                <p class="text-xs text-stone mb-6">請選擇您的身分以開始使用</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <button v-for="m in members" :key="m" @click="setUser(m)" class="py-3 rounded-xl bg-stone/5 hover:bg-clover-50 hover:text-clover-600 font-bold text-sm transition-all">{{ m }}</button>
+                </div>
+            </div>
         </div>
 
         <!-- Toast -->
@@ -107,27 +81,22 @@
             </div>
         </transition>
 
-        <!-- Image Viewer Modal -->
+        <!-- Image Viewer -->
         <div v-if="showImageModal" class="fixed inset-0 z-[200] bg-sumi/90 backdrop-blur-sm flex items-center justify-center p-4" @click="showImageModal = false">
             <div class="relative max-w-full max-h-full">
                 <img :src="viewImageSrc" class="max-w-full max-h-[85vh] rounded-2xl shadow-2xl animate-bounce-in object-contain bg-white" @click.stop>
-                <button class="absolute -top-12 right-0 text-white/80 hover:text-white text-3xl transition" @click="showImageModal = false">
-                    <i class="fa-solid fa-circle-xmark"></i>
-                </button>
+                <button class="absolute -top-12 right-0 text-white/80 hover:text-white text-3xl transition" @click="showImageModal = false"><i class="fa-solid fa-circle-xmark"></i></button>
             </div>
         </div>
 
         <!-- Confirm Modal -->
         <div v-if="confirmModal.show" class="absolute inset-0 bg-sumi/10 backdrop-blur-[2px] z-[90] flex items-center justify-center p-8">
             <div class="bg-white w-full max-w-xs rounded-[32px] p-8 shadow-clover animate-bounce-in text-center border border-clover-50">
-                <div class="w-14 h-14 rounded-full bg-clover-50 text-clover-500 mx-auto flex items-center justify-center mb-5">
-                    <i class="fa-solid fa-clover text-xl"></i>
-                </div>
                 <h3 class="text-lg font-bold text-sumi mb-2 tracking-wide">{{ confirmModal.title }}</h3>
                 <p class="text-sm text-stone mb-8 leading-relaxed">{{ confirmModal.message }}</p>
                 <div class="flex space-x-3">
-                    <button @click="confirmModal.show = false" class="flex-1 py-3 rounded-2xl bg-stone/5 text-stone font-medium text-sm hover:bg-stone/10 transition duration-300">取消</button>
-                    <button @click="confirmAction" class="flex-1 py-3 rounded-2xl bg-clover-300 text-white font-medium text-sm shadow-lg shadow-clover-200 hover:bg-clover-400 transition duration-300">確認</button>
+                    <button @click="confirmModal.show = false" class="flex-1 py-3 rounded-2xl bg-stone/5 text-stone font-medium text-sm">取消</button>
+                    <button @click="confirmAction" class="flex-1 py-3 rounded-2xl bg-clover-300 text-white font-medium text-sm shadow-lg shadow-clover-200">確認</button>
                 </div>
             </div>
         </div>
@@ -136,24 +105,24 @@
         <header class="bg-washi/95 backdrop-blur-sm z-20 sticky top-0 pt-8 pb-2 px-8">
             <div class="flex justify-between items-center mb-6">
                 <div>
-                    <h1 class="text-2xl font-light tracking-widest text-clover-600 flex items-center">
+                    <h1 class="text-2xl font-light tracking-widest text-clover-600 flex items-center cursor-pointer" @click="currentUser = null">
                         NAGOYA <i class="fa-solid fa-clover text-sm ml-2 text-clover-300 transform -rotate-12"></i>
                     </h1>
-                    <p class="text-[10px] text-stone tracking-[0.15em] mt-1 font-medium">2025.12.30 - 2026.01.05 • 冬之旅</p>
+                    <p class="text-[10px] text-stone tracking-[0.15em] mt-1 font-medium">
+                        2025.12.30 - 2026.01.05 • <span v-if="currentUser" class="text-clover-500 font-bold">{{ currentUser }}</span>
+                    </p>
                 </div>
+                <!-- Lock Toggle (New) -->
+                <button @click="isLocked = !isLocked" :class="isLocked ? 'text-red-400 bg-red-50' : 'text-stone/30 bg-stone/5'" class="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300">
+                    <i :class="isLocked ? 'fa-solid fa-lock' : 'fa-solid fa-lock-open'"></i>
+                </button>
             </div>
 
             <div class="flex justify-between items-center px-1">
                 <nav class="flex space-x-2 mx-auto w-full justify-between max-w-[340px]">
                     <button v-for="tab in ['traffic', 'split', 'map', 'broadcast', 'info']" :key="tab" @click="currentTab = tab" :class="currentTab === tab ? 'text-clover-500' : 'text-stone/60 hover:text-stone'" class="flex flex-col items-center transition-all duration-500 group relative py-2 px-2 flex-1">
                         <div class="relative">
-                            <i :class="{
-                                'traffic': 'fa-solid fa-train-subway',
-                                'split': 'fa-solid fa-yen-sign',
-                                'map': 'fa-regular fa-map',
-                                'broadcast': 'fa-regular fa-comment-dots',
-                                'info': 'fa-solid fa-circle-info'
-                            }[tab]" class="text-lg mb-2 transition-transform duration-300" :class="currentTab === tab ? '-translate-y-1' : ''"></i>
+                            <i :class="{ 'traffic': 'fa-solid fa-train-subway', 'split': 'fa-solid fa-yen-sign', 'map': 'fa-regular fa-map', 'broadcast': 'fa-regular fa-comment-dots', 'info': 'fa-solid fa-circle-info' }[tab]" class="text-lg mb-2 transition-transform duration-300" :class="currentTab === tab ? '-translate-y-1' : ''"></i>
                             <span v-if="tab === 'broadcast' && messages.length > 0" class="absolute -top-1 -right-1 w-1.5 h-1.5 bg-camel-400 rounded-full border border-washi"></span>
                         </div>
                         <span class="text-[9px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-1 uppercase">{{ tab }}</span>
@@ -166,54 +135,38 @@
         <!-- Main Content -->
         <main class="flex-1 overflow-y-auto relative scroll-smooth px-6 pt-2">
             
-            <!-- Tab: Traffic -->
+            <!-- Traffic -->
             <div v-if="currentTab === 'traffic'" class="pb-32 animate-fade-in-up">
                 <div class="sticky top-0 z-10 bg-washi/95 backdrop-blur-md pt-2 pb-6 -mx-6 px-6 mb-2">
                     <div class="flex space-x-3 overflow-x-auto no-scrollbar items-center py-1">
-                        <button v-for="day in days" :key="day" @click="currentDay = day" 
-                            class="flex flex-col items-center justify-center min-w-[3.5rem] h-14 rounded-2xl transition-all duration-300 group border"
-                            :class="currentDay === day ? 'bg-clover-300 text-white border-clover-300 shadow-lg shadow-clover-200 transform scale-105' : 'bg-white text-stone border-transparent hover:bg-white hover:shadow-sm'">
-                            <span class="text-[9px] uppercase font-bold tracking-widest mb-0.5 opacity-80">Day</span>
-                            <span class="text-lg font-medium leading-none">{{ day }}</span>
-                        </button>
+                        <button v-for="day in days" :key="day" @click="currentDay = day" class="flex flex-col items-center justify-center min-w-[3.5rem] h-14 rounded-2xl transition-all duration-300 group border" :class="currentDay === day ? 'bg-clover-300 text-white border-clover-300 shadow-lg shadow-clover-200 transform scale-105' : 'bg-white text-stone border-transparent hover:bg-white hover:shadow-sm'"><span class="text-[9px] uppercase font-bold tracking-widest mb-0.5 opacity-80">Day</span><span class="text-lg font-medium leading-none">{{ day }}</span></button>
                     </div>
                 </div>
-
                 <div class="space-y-0 relative">
-                    <div v-if="filteredTraffic.length === 0" class="flex flex-col items-center justify-center py-20 text-stone/30">
-                        <i class="fa-solid fa-leaf text-4xl mb-4 opacity-30 text-clover-300"></i>
-                        <p class="font-light text-xs tracking-[0.2em]">NO SCHEDULE</p>
-                    </div>
+                    <div v-if="filteredTraffic.length === 0" class="flex flex-col items-center justify-center py-20 text-stone/30"><i class="fa-solid fa-leaf text-4xl mb-4 opacity-30 text-clover-300"></i><p class="font-light text-xs tracking-[0.2em]">NO SCHEDULE</p></div>
                     <div v-if="filteredTraffic.length > 0" class="absolute top-6 bottom-12 left-[4.5rem] w-[1px] timeline-line z-0"></div>
                     <div v-for="item in filteredTraffic" :key="item.id" class="relative z-10 mb-6 last:mb-0 group">
                         <div class="flex items-start">
                             <div class="w-[4.5rem] flex flex-col items-center pt-2 mr-4 flex-shrink-0 bg-washi z-10">
                                 <span class="text-sm font-bold text-clover-600 tracking-wide font-mono">{{ item.time }}</span>
                                 <span v-if="item.endTime" class="text-[10px] text-stone/60 font-mono mt-1">{{ item.endTime }}</span>
-                                <div class="w-8 h-8 rounded-full bg-white border border-clover-100 text-clover-400 flex items-center justify-center text-sm shadow-sm mt-3 mb-2">
-                                    <i :class="getTransportIcon(item.type)"></i>
-                                </div>
+                                <div class="w-8 h-8 rounded-full bg-white border border-clover-100 text-clover-400 flex items-center justify-center text-sm shadow-sm mt-3 mb-2"><i :class="getTransportIcon(item.type)"></i></div>
                             </div>
                             <div class="flex-1 bg-white rounded-[24px] p-5 shadow-card hover:shadow-soft transition-all duration-300 border border-transparent hover:border-clover-100 relative overflow-hidden">
                                 <div class="absolute -right-6 -top-6 w-24 h-24 bg-clover-50 rounded-full opacity-60 blur-xl pointer-events-none"></div>
                                 <div class="flex justify-between items-start mb-2 relative">
                                     <div>
-                                        <div class="text-[9px] text-clover-400 font-bold tracking-widest uppercase mb-1 flex items-center">
-                                            <span class="w-1.5 h-1.5 bg-clover-300 rounded-full mr-1.5"></span>Destination
-                                        </div>
+                                        <div class="text-[9px] text-clover-400 font-bold tracking-widest uppercase mb-1 flex items-center"><span class="w-1.5 h-1.5 bg-clover-300 rounded-full mr-1.5"></span>Destination</div>
                                         <h3 class="text-lg font-medium text-sumi leading-snug">{{ item.destination }}</h3>
                                     </div>
                                     <div class="flex space-x-2 pl-2">
-                                        <a v-if="item.url" :href="item.url" target="_blank" class="w-8 h-8 bg-clover-50 text-clover-500 rounded-full flex items-center justify-center hover:bg-clover-500 hover:text-white transition-colors">
-                                            <i class="fa-solid fa-link text-xs"></i>
-                                        </a>
-                                        <a v-if="item.ticketUrl" :href="item.ticketUrl" target="_blank" class="w-8 h-8 bg-camel-50 text-camel-400 rounded-full flex items-center justify-center hover:bg-camel-400 hover:text-white transition-colors">
-                                            <i class="fa-solid fa-ticket text-xs"></i>
-                                        </a>
+                                        <a v-if="item.url" :href="item.url" target="_blank" class="w-8 h-8 bg-clover-50 text-clover-500 rounded-full flex items-center justify-center hover:bg-clover-500 hover:text-white transition-colors"><i class="fa-solid fa-link text-xs"></i></a>
+                                        <a v-if="item.ticketUrl" :href="item.ticketUrl" target="_blank" class="w-8 h-8 bg-camel-50 text-camel-400 rounded-full flex items-center justify-center hover:bg-camel-400 hover:text-white transition-colors"><i class="fa-solid fa-ticket text-xs"></i></a>
                                     </div>
                                 </div>
                                 <p v-if="item.description" class="text-xs text-stone leading-relaxed whitespace-pre-wrap relative z-10 pl-3 border-l-2 border-clover-100">{{ item.description }}</p>
-                                <div class="flex justify-end space-x-3 mt-4 pt-3 border-t border-clover-50 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                                <div v-if="!isLocked" class="flex justify-end space-x-3 mt-4 pt-3 border-t border-clover-50">
+                                    <button @click="copyTraffic(item)" class="text-xs text-stone hover:text-clover-500 transition-colors flex items-center"><i class="fa-regular fa-copy mr-1"></i> Copy</button>
                                     <button @click="editTraffic(item)" class="text-xs text-stone hover:text-clover-500 transition-colors flex items-center"><i class="fa-solid fa-pen mr-1"></i> Edit</button>
                                     <button @click="askDelete('traffic', item.id)" class="text-xs text-stone hover:text-red-400 transition-colors flex items-center"><i class="fa-solid fa-trash-can mr-1"></i> Delete</button>
                                 </div>
@@ -221,15 +174,13 @@
                         </div>
                     </div>
                 </div>
-                <button @click="openTrafficModal" class="fixed bottom-8 right-6 w-14 h-14 bg-clover-300 text-white rounded-full shadow-lg shadow-clover-200 flex items-center justify-center hover:scale-105 hover:bg-clover-400 transition duration-300 z-20">
-                    <i class="fa-solid fa-plus text-xl"></i>
-                </button>
+                <button v-if="!isLocked" @click="openTrafficModal" class="fixed bottom-8 right-6 w-14 h-14 bg-clover-300 text-white rounded-full shadow-lg shadow-clover-200 flex items-center justify-center hover:scale-105 hover:bg-clover-400 transition duration-300 z-20"><i class="fa-solid fa-plus text-xl"></i></button>
             </div>
 
-            <!-- Tab: Split -->
+            <!-- Split -->
             <div v-if="currentTab === 'split'" class="pb-32 animate-fade-in-up space-y-6 pt-2">
                 <div class="flex justify-between items-center px-2">
-                    <div class="text-[10px] text-stone tracking-widest font-bold uppercase">即時匯率參考</div>
+                    <div class="text-[10px] text-stone tracking-widest font-bold uppercase">匯率 (Exchange Rate)</div>
                     <div class="flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm border border-clover-50">
                         <span class="text-xs text-stone">JPY 1 = TWD</span>
                         <span class="w-14 text-right font-bold text-clover-600 bg-transparent border-b border-dotted border-clover-300 text-sm pb-0.5">{{ exchangeRate }}</span>
@@ -238,403 +189,172 @@
 
                 <div class="bg-gradient-to-br from-clover-300 to-clover-400 rounded-[32px] p-8 text-white shadow-lg shadow-clover-200 relative overflow-hidden">
                     <div class="absolute -top-10 -right-10 w-40 h-40 bg-white opacity-20 rounded-full blur-3xl"></div>
-                    <div class="absolute bottom-0 left-0 w-32 h-32 bg-yellow-100 opacity-10 rounded-full -ml-10 -mb-10 blur-2xl"></div>
-                    <h2 class="text-[10px] tracking-[0.2em] opacity-80 mb-2 uppercase flex items-center"><i class="fa-solid fa-clover mr-2 opacity-50"></i>總計花費金額</h2>
-                    <div class="flex items-baseline space-x-2">
-                        <span class="text-lg opacity-80 font-light">NT$</span>
-                        <span class="text-5xl font-light tracking-tight">{{ Math.round(totalExpense).toLocaleString() }}</span>
-                    </div>
+                    <h2 class="text-[10px] tracking-[0.2em] opacity-80 mb-2 uppercase flex items-center"><i class="fa-solid fa-clover mr-2 opacity-50"></i>總計花費</h2>
+                    <div class="flex items-baseline space-x-2"><span class="text-lg opacity-80 font-light">NT$</span><span class="text-5xl font-light tracking-tight">{{ Math.round(totalExpense).toLocaleString() }}</span></div>
                     <div class="mt-8 bg-white/20 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
                         <p v-if="debts.length === 0" class="text-center text-xs opacity-90 py-2 tracking-wider">All settled ✨</p>
                         <div v-else class="space-y-3">
                             <div v-for="debt in debts" :key="debt.text" class="flex justify-between items-center text-xs border-b border-white/10 pb-2 last:border-0 last:pb-0">
-                                <div class="flex items-center space-x-3">
-                                    <span class="font-bold bg-white/30 px-2 py-1 rounded-lg">{{ debt.from }}</span>
-                                    <i class="fa-solid fa-arrow-right-long opacity-70 text-[10px]"></i>
-                                    <span class="font-bold bg-white/30 px-2 py-1 rounded-lg">{{ debt.to }}</span>
-                                </div>
+                                <div class="flex items-center space-x-3"><span class="font-bold bg-white/30 px-2 py-1 rounded-lg">{{ debt.from }}</span><i class="fa-solid fa-arrow-right-long opacity-70 text-[10px]"></i><span class="font-bold bg-white/30 px-2 py-1 rounded-lg">{{ debt.to }}</span></div>
                                 <span class="font-medium tracking-wide">NT$ {{ Math.round(debt.amount).toLocaleString() }}</span>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- 新增支出 Card -->
-                <div class="bg-white rounded-[32px] p-6 shadow-card border border-transparent relative overflow-hidden">
+                <div v-if="!isLocked" class="bg-white rounded-[32px] p-6 shadow-card border border-transparent relative overflow-hidden">
                     <div class="flex justify-between items-center mb-5">
                         <h3 class="font-medium text-sumi tracking-wide">新增支出</h3>
-                        <div class="flex bg-clover-50 rounded-xl p-1">
-                            <button @click="currencyMode = 'JPY'" :class="currencyMode === 'JPY' ? 'bg-white text-clover-600 shadow-sm' : 'text-stone'" class="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all">JPY</button>
-                            <button @click="currencyMode = 'TWD'" :class="currencyMode === 'TWD' ? 'bg-white text-clover-600 shadow-sm' : 'text-stone'" class="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all">TWD</button>
-                        </div>
+                        <div class="flex bg-clover-50 rounded-xl p-1"><button @click="currencyMode = 'JPY'" :class="currencyMode === 'JPY' ? 'bg-white text-clover-600 shadow-sm' : 'text-stone'" class="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all">JPY</button><button @click="currencyMode = 'TWD'" :class="currencyMode === 'TWD' ? 'bg-white text-clover-600 shadow-sm' : 'text-stone'" class="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all">TWD</button></div>
                     </div>
                     <div class="space-y-4">
-                        <input v-model="newExpense.description" placeholder="項目名稱..." class="w-full bg-clover-50/50 border-none rounded-2xl p-4 text-sm text-sumi placeholder-stone/50 focus:ring-2 focus:ring-clover-100 outline-none transition" enterkeyhint="next">
+                        <input v-model="newExpense.description" placeholder="項目名稱..." class="w-full bg-clover-50/50 border-none rounded-2xl p-4 text-sm text-sumi focus:ring-2 focus:ring-clover-100 outline-none" enterkeyhint="next">
                         <div class="flex space-x-3 relative">
-                            <div class="flex-1 relative">
-                                <span class="absolute left-4 top-4 text-stone/50 text-sm font-bold">{{ currencyMode === 'JPY' ? '¥' : '$' }}</span>
-                                <input v-model.number="newExpense.inputAmount" type="number" placeholder="0" class="w-full pl-8 bg-clover-50/50 border-none rounded-2xl p-4 text-sm text-sumi placeholder-stone/50 focus:ring-2 focus:ring-clover-100 outline-none transition font-mono" enterkeyhint="done">
-                            </div>
-                            <div class="flex items-center justify-center px-4 bg-clover-50/50 rounded-2xl min-w-[90px]">
-                                <div class="text-right">
-                                    <div class="text-[9px] text-stone uppercase tracking-wide">匯率試算</div>
-                                    <div class="text-xs text-sumi font-bold">NT$ {{ calculatedTWD.toLocaleString() }}</div>
-                                </div>
-                            </div>
+                            <div class="flex-1 relative"><span class="absolute left-4 top-4 text-stone/50 text-sm font-bold">{{ currencyMode === 'JPY' ? '¥' : '$' }}</span><input v-model.number="newExpense.inputAmount" type="number" placeholder="0" class="w-full pl-8 bg-clover-50/50 border-none rounded-2xl p-4 text-sm text-sumi focus:ring-2 focus:ring-clover-100 outline-none font-mono" enterkeyhint="done"></div>
+                            <div class="flex items-center justify-center px-4 bg-clover-50/50 rounded-2xl min-w-[90px]"><div class="text-right"><div class="text-[9px] text-stone uppercase tracking-wide">NT$</div><div class="text-xs text-sumi font-bold">{{ calculatedTWD.toLocaleString() }}</div></div></div>
                         </div>
                         <div class="pt-2">
                             <label class="text-[10px] text-stone tracking-widest uppercase block mb-3 ml-1">付款人</label>
                             <div class="grid grid-cols-4 gap-2">
-                                <button v-for="member in members" :key="member" @click="newExpense.payer = member" :class="newExpense.payer === member ? 'bg-clover-300 text-white shadow-md shadow-clover-100' : 'bg-clover-50/50 text-stone hover:bg-clover-50'" class="py-2.5 rounded-xl text-xs transition-all duration-300 truncate font-medium">{{ member }}</button>
+                                <button v-for="member in members" :key="member" @click="newExpense.payer = member" :class="newExpense.payer === member ? 'bg-clover-300 text-white shadow-md' : 'bg-clover-50/50 text-stone hover:bg-clover-50'" class="py-2.5 rounded-xl text-xs transition-all duration-300 truncate font-medium">{{ member }}</button>
                             </div>
                         </div>
-
-                        <!-- Add Image Attachment -->
-                        <div class="mt-4 pt-4 border-t border-dashed border-stone/10">
-                            <label class="text-[10px] text-stone tracking-widest uppercase block mb-2 flex items-center">
-                                <i class="fa-solid fa-camera mr-1 text-stone/40"></i> 收據圖片 (Receipt)
-                            </label>
-                            <div class="flex items-center space-x-3">
-                                 <div v-if="newExpense.image" class="relative w-16 h-16 rounded-xl overflow-hidden group shadow-sm border border-clover-100">
-                                    <img :src="newExpense.image" class="w-full h-full object-cover">
-                                    <button @click="newExpense.image = ''" class="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-times"></i></button>
-                                </div>
-                                <label class="w-16 h-16 rounded-xl border-2 border-dashed border-clover-200 hover:border-clover-400 bg-clover-50/50 flex flex-col items-center justify-center text-clover-400 cursor-pointer transition">
-                                    <i class="fa-solid fa-plus text-sm mb-1"></i>
-                                    <span class="text-[8px] font-bold">ADD</span>
-                                    <input type="file" accept="image/*" class="hidden" @change="handleExpenseImage">
-                                </label>
-                            </div>
+                        <div class="mt-4 pt-4 border-t border-dashed border-stone/10 flex items-center space-x-3">
+                            <div v-if="newExpense.image" class="relative w-16 h-16 rounded-xl overflow-hidden group shadow-sm"><img :src="newExpense.image" class="w-full h-full object-cover"><button @click="newExpense.image = ''" class="absolute inset-0 bg-black/40 text-white flex items-center justify-center"><i class="fa-solid fa-times"></i></button></div>
+                            <label class="flex-1 h-12 rounded-xl border-2 border-dashed border-clover-200 hover:border-clover-400 bg-clover-50/50 flex items-center justify-center text-clover-400 cursor-pointer text-xs font-bold gap-2"><i class="fa-solid fa-camera"></i> ADD RECEIPT<input type="file" accept="image/*" class="hidden" @change="handleExpenseImage"></label>
                         </div>
-
-                        <button @click="addExpense" class="w-full mt-2 bg-stone/5 text-sumi py-4 rounded-2xl text-sm font-medium hover:bg-clover-300 hover:text-white hover:shadow-lg hover:shadow-clover-100 transition duration-300 flex items-center justify-center"><i class="fa-solid fa-plus mr-2"></i> 新增一筆</button>
+                        <button @click="addExpense" class="w-full mt-2 bg-stone/5 text-sumi py-4 rounded-2xl text-sm font-medium hover:bg-clover-300 hover:text-white transition duration-300 flex items-center justify-center"><i class="fa-solid fa-plus mr-2"></i> 新增一筆</button>
                     </div>
                 </div>
 
                 <div class="bg-white rounded-[32px] p-6 shadow-card">
                     <h3 class="text-xs font-bold text-stone tracking-widest uppercase mb-4 pl-2 border-l-2 border-camel-300">個人支出明細</h3>
                     <div class="grid grid-cols-4 gap-2 mb-6">
-                        <button v-for="m in members" :key="m" @click="selectedPayerForDetail = m" :class="selectedPayerForDetail === m ? 'bg-camel-300 text-white shadow-md shadow-camel-100' : 'bg-clover-50/50 text-stone hover:bg-camel-50'" class="px-1 py-2.5 rounded-xl text-xs transition-all font-medium truncate">{{ m }}</button>
+                        <button v-for="m in members" :key="m" @click="selectedPayerForDetail = m" :class="selectedPayerForDetail === m ? 'bg-camel-300 text-white shadow-md' : 'bg-clover-50/50 text-stone hover:bg-camel-50'" class="px-1 py-2.5 rounded-xl text-xs transition-all font-medium truncate">{{ m }}</button>
                     </div>
                     <div v-if="selectedPayerForDetail" class="bg-clover-50/30 rounded-2xl p-4">
                         <div v-if="payerExpenses.length === 0" class="text-center text-stone/40 text-xs py-8">No records found</div>
-                        <div v-else class="space-y-3 max-h-60 overflow-y-auto pr-2 scrollbar-thin">
+                        <div class="space-y-3 max-h-60 overflow-y-auto pr-2 scrollbar-thin">
                             <div v-for="(exp, index) in payerExpenses" :key="index" class="flex justify-between items-center text-sm group">
-                                <div class="flex-1 min-w-0 mr-4">
-                                    <div class="text-sumi truncate text-xs font-medium">{{ exp.description }}</div>
-                                    <div class="text-[9px] text-stone mt-0.5">{{ exp.date }}</div>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="font-mono text-clover-600 text-xs mr-2">NT$ {{ Math.round(exp.amount).toLocaleString() }}</span>
-                                    <button v-if="exp.image" @click.stop="openImageModal(exp.image)" class="text-stone/40 hover:text-clover-500 transition px-1">
-                                        <i class="fa-regular fa-image"></i>
-                                    </button>
-                                </div>
+                                <div class="flex-1 min-w-0 mr-4"><div class="text-sumi truncate text-xs font-medium">{{ exp.description }}</div><div class="text-[9px] text-stone mt-0.5">{{ exp.date }}</div></div>
+                                <div class="flex items-center"><span class="font-mono text-clover-600 text-xs mr-2">NT$ {{ Math.round(exp.amount).toLocaleString() }}</span><button v-if="exp.image" @click.stop="openImageModal(exp.image)" class="text-stone/40 hover:text-clover-500"><i class="fa-regular fa-image"></i></button></div>
                             </div>
                         </div>
-                        <div class="mt-4 pt-4 border-t border-dashed border-stone/20 flex justify-between items-center">
-                            <span class="text-[10px] text-stone font-bold tracking-widest uppercase">Total</span>
-                            <span class="text-lg font-medium text-sumi font-mono">NT$ {{ Math.round(payerTotal).toLocaleString() }}</span>
-                        </div>
+                        <div class="mt-4 pt-4 border-t border-dashed border-stone/20 flex justify-between items-center"><span class="text-[10px] text-stone font-bold tracking-widest uppercase">Total</span><span class="text-lg font-medium text-sumi font-mono">NT$ {{ Math.round(payerTotal).toLocaleString() }}</span></div>
                     </div>
-                    
-                    <!-- Export CSV Button (New) -->
-                    <div class="mt-4 text-center">
-                        <button @click="exportToCSV" class="text-xs text-stone/50 hover:text-clover-600 underline tracking-wider flex items-center justify-center w-full py-2">
-                            <i class="fa-solid fa-file-csv mr-1.5"></i>匯出 Excel (CSV)
-                        </button>
-                    </div>
+                    <div class="mt-4 text-center"><button @click="exportToCSV" class="text-xs text-stone/50 hover:text-clover-600 underline tracking-wider"><i class="fa-solid fa-file-csv mr-1.5"></i>匯出 CSV</button></div>
                 </div>
                 
                  <div class="space-y-3">
-                    <h3 class="text-[10px] text-stone tracking-widest uppercase pl-4 mb-1">支出紀錄列表</h3>
+                    <h3 class="text-[10px] text-stone tracking-widest uppercase pl-4 mb-1">近期支出</h3>
                     <div v-for="(exp, index) in expenses.slice().reverse().slice(0, 5)" :key="index" class="bg-white px-5 py-4 rounded-2xl flex justify-between items-center group border border-transparent hover:border-clover-50 shadow-sm">
-                        <div class="flex items-center space-x-4 overflow-hidden">
-                            <div class="w-9 h-9 rounded-full bg-clover-50 text-clover-500 flex items-center justify-center text-xs font-bold">{{ exp.payer.substring(0,1) }}</div>
-                            <div class="min-w-0">
-                                <p class="text-sumi text-sm truncate font-medium">{{ exp.description }}</p>
-                                <p class="text-[10px] text-stone mt-0.5">{{ exp.date }}</p>
-                            </div>
-                        </div>
+                        <div class="flex items-center space-x-4 overflow-hidden"><div class="w-9 h-9 rounded-full bg-clover-50 text-clover-500 flex items-center justify-center text-xs font-bold">{{ exp.payer.substring(0,1) }}</div><div class="min-w-0"><p class="text-sumi text-sm truncate font-medium">{{ exp.description }}</p><p class="text-[10px] text-stone mt-0.5">{{ exp.date }}</p></div></div>
                         <div class="flex flex-col items-end">
-                            <div class="flex items-center space-x-2">
-                                <div class="text-sm font-bold text-sumi font-mono">NT$ {{ Math.round(exp.amount).toLocaleString() }}</div>
-                                <button v-if="exp.image" @click.stop="openImageModal(exp.image)" class="text-stone/30 hover:text-clover-500 transition text-xs">
-                                    <i class="fa-regular fa-image"></i>
-                                </button>
-                            </div>
-                            <button @click="askDelete('expense', expenses.length - 1 - index)" class="text-xs text-stone hover:text-red-400 mt-1 opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash-can"></i></button>
+                            <div class="flex items-center space-x-2"><div class="text-sm font-bold text-sumi font-mono">NT$ {{ Math.round(exp.amount).toLocaleString() }}</div><button v-if="exp.image" @click.stop="openImageModal(exp.image)" class="text-stone/30 hover:text-clover-500 text-xs"><i class="fa-regular fa-image"></i></button></div>
+                            <button v-if="!isLocked" @click="askDelete('expense', expenses.length - 1 - index)" class="text-xs text-stone hover:text-red-400 mt-1"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Public Wallet Section -->
+                <!-- Public Wallet -->
                 <div class="mt-8 bg-white rounded-[32px] p-6 shadow-card border border-clover-100/50">
-                    <div class="flex items-center mb-6">
-                        <div class="w-10 h-10 rounded-full bg-clover-100 text-clover-500 flex items-center justify-center mr-3 shadow-inner">
-                            <i class="fa-solid fa-wallet text-lg"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-bold text-sumi tracking-wide">公費錢包</h3>
-                            <p class="text-[10px] text-stone tracking-wider uppercase">Public Wallet</p>
-                        </div>
-                    </div>
-
+                    <div class="flex items-center mb-6"><div class="w-10 h-10 rounded-full bg-clover-100 text-clover-500 flex items-center justify-center mr-3 shadow-inner"><i class="fa-solid fa-wallet text-lg"></i></div><div><h3 class="text-base font-bold text-sumi tracking-wide">公費錢包</h3><p class="text-[10px] text-stone tracking-wider uppercase">Public Wallet</p></div></div>
                     <div class="bg-gradient-to-br from-stone-50 to-clover-50/30 rounded-2xl p-5 mb-6 border border-stone/5">
-                        <div class="flex justify-between items-end mb-1">
-                            <span class="text-[10px] text-stone font-bold tracking-widest uppercase">目前餘額 (Balance)</span>
-                            <div class="text-right">
-                                <span class="text-xs text-stone mr-1">NT$</span>
-                                <span class="text-2xl font-light text-clover-600 font-mono">{{ Math.round(remainingPublicFund).toLocaleString() }}</span>
-                            </div>
-                        </div>
-                        <div class="flex justify-between items-center mb-4 text-[9px] text-stone/40">
-                            <span>預算總額: {{ Math.round(publicFundTotal).toLocaleString() }}</span>
-                            <span>已支出: {{ Math.round(totalPublicSpent).toLocaleString() }}</span>
-                        </div>
-
-                        <div class="w-full h-1.5 bg-white rounded-full overflow-hidden shadow-inner mb-4">
-                            <div class="h-full bg-clover-400 rounded-full transition-all duration-1000 ease-out relative" :style="{ width: publicFundPercentage + '%' }">
-                                <div class="absolute right-0 top-0 bottom-0 w-2 bg-white/30"></div>
-                            </div>
-                        </div>
-                        
-                        <div class="pt-4 border-t border-dashed border-stone/10">
-                            <label class="text-[9px] text-stone tracking-widest uppercase block mb-2 flex items-center"><i class="fa-solid fa-gear mr-1 text-stone/30"></i>設定錢包總額 (Set Budget)</label>
-                            <div class="flex items-center space-x-2">
-                                <div class="flex bg-white rounded-lg p-0.5 shadow-sm border border-stone/5">
-                                    <button @click="publicFundCurrency = 'JPY'" :class="publicFundCurrency === 'JPY' ? 'bg-clover-100 text-clover-600' : 'text-stone/50 hover:bg-stone/5'" class="px-2 py-1.5 rounded-md text-[10px] font-bold transition-all">JPY</button>
-                                    <button @click="publicFundCurrency = 'TWD'" :class="publicFundCurrency === 'TWD' ? 'bg-clover-100 text-clover-600' : 'text-stone/50 hover:bg-stone/5'" class="px-2 py-1.5 rounded-md text-[10px] font-bold transition-all">TWD</button>
-                                </div>
-                                <input v-model.number="publicFundInput" type="number" placeholder="金額..." class="flex-1 min-w-0 bg-white border-none rounded-xl px-3 py-2 text-sm text-sumi outline-none focus:ring-1 focus:ring-clover-300 font-mono shadow-sm" enterkeyhint="done">
-                                <button @click="updatePublicFund" class="bg-sumi text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-clover-500 transition shadow-lg shadow-stone/20"><i class="fa-solid fa-check text-xs"></i></button>
-                            </div>
-                            <div v-if="publicFundCurrency === 'JPY' && publicFundInput" class="text-right mt-1 px-1">
-                                <span class="text-[9px] text-stone font-mono">≈ NT$ {{ Math.round(publicFundInput * exchangeRate).toLocaleString() }}</span>
-                            </div>
-                        </div>
+                        <div class="flex justify-between items-end mb-1"><span class="text-[10px] text-stone font-bold tracking-widest uppercase">餘額 (Balance)</span><div class="text-right"><span class="text-xs text-stone mr-1">NT$</span><span class="text-2xl font-light text-clover-600 font-mono">{{ Math.round(remainingPublicFund).toLocaleString() }}</span></div></div>
+                        <div class="w-full h-1.5 bg-white rounded-full overflow-hidden shadow-inner mb-4"><div class="h-full bg-clover-400 rounded-full transition-all duration-1000 ease-out relative" :style="{ width: publicFundPercentage + '%' }"></div></div>
+                        <div v-if="!isLocked" class="pt-4 border-t border-dashed border-stone/10"><label class="text-[9px] text-stone tracking-widest uppercase block mb-2"><i class="fa-solid fa-gear mr-1"></i>設定總額</label><div class="flex items-center space-x-2"><input v-model.number="publicFundInput" type="number" placeholder="JPY Amount..." class="flex-1 min-w-0 bg-white border-none rounded-xl px-3 py-2 text-sm text-sumi outline-none font-mono shadow-sm"><button @click="updatePublicFund" class="bg-sumi text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-clover-500"><i class="fa-solid fa-check text-xs"></i></button></div></div>
                     </div>
-
-                    <div class="mb-6 relative">
-                        <h4 class="text-[10px] text-stone tracking-widest uppercase font-bold mb-3 pl-2 border-l-2 border-camel-300">新增公費支出 (Add Expense)</h4>
-                        <div class="space-y-3">
-                            <input v-model="newPublicExpense.name" placeholder="項目名稱 (Item)..." class="w-full bg-stone/5 border-none rounded-2xl px-4 py-3 text-sm text-sumi outline-none focus:bg-white focus:ring-1 focus:ring-camel-300 transition focus:shadow-sm placeholder-stone/40">
-                            
-                            <div class="flex space-x-2 items-start">
-                                <div class="flex flex-col space-y-1">
-                                    <button @click="newPublicExpense.currency = 'JPY'" :class="newPublicExpense.currency === 'JPY' ? 'bg-camel-400 text-white shadow-md' : 'bg-stone/10 text-stone hover:bg-stone/20'" class="px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all">JPY</button>
-                                    <button @click="newPublicExpense.currency = 'TWD'" :class="newPublicExpense.currency === 'TWD' ? 'bg-camel-400 text-white shadow-md' : 'bg-stone/10 text-stone hover:bg-stone/20'" class="px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all">TWD</button>
-                                </div>
-                                <div class="flex-1 relative">
-                                    <input v-model.number="newPublicExpense.inputAmount" type="number" placeholder="金額..." class="w-full bg-stone/5 border-none rounded-2xl px-4 py-3 pl-8 text-sm text-sumi outline-none focus:bg-white focus:ring-1 focus:ring-camel-300 transition font-mono focus:shadow-sm placeholder-stone/40" enterkeyhint="done">
-                                    <span class="absolute left-3.5 top-3.5 text-stone/40 text-xs font-bold">{{ newPublicExpense.currency === 'JPY' ? '¥' : '$' }}</span>
-                                    <div v-if="newPublicExpense.currency === 'JPY' && newPublicExpense.inputAmount" class="absolute right-3 top-3.5 text-[10px] text-stone font-mono">
-                                        ≈ NT$ {{ Math.round(newPublicExpense.inputAmount * exchangeRate).toLocaleString() }}
-                                    </div>
-                                </div>
-                                <button @click="addPublicExpense" class="bg-camel-400 text-white w-12 h-[46px] rounded-2xl text-xs font-bold shadow-lg shadow-camel-100 hover:bg-camel-500 hover:scale-105 transition flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-plus text-sm"></i></button>
-                            </div>
-
-                            <div class="flex items-center space-x-3 pt-1">
-                                <div v-if="newPublicExpense.image" class="relative w-10 h-10 rounded-lg overflow-hidden group shadow-sm border border-stone/10">
-                                    <img :src="newPublicExpense.image" class="w-full h-full object-cover">
-                                    <button @click="newPublicExpense.image = ''" class="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-times text-[10px]"></i></button>
-                                </div>
-                                <label class="flex items-center space-x-2 cursor-pointer bg-stone/5 px-3 py-2 rounded-xl hover:bg-stone/10 transition group">
-                                    <i class="fa-solid fa-camera text-stone/40 group-hover:text-camel-400 transition-colors"></i>
-                                    <span class="text-[10px] text-stone/60 font-bold group-hover:text-stone/80">收據 (Receipt)</span>
-                                    <input type="file" accept="image/*" class="hidden" @change="handlePublicImage">
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
+                    <div v-if="!isLocked" class="mb-6"><h4 class="text-[10px] text-stone tracking-widest uppercase font-bold mb-3 pl-2 border-l-2 border-camel-300">新增公費支出</h4><div class="space-y-3"><input v-model="newPublicExpense.name" placeholder="項目..." class="w-full bg-stone/5 border-none rounded-2xl px-4 py-3 text-sm"><div class="flex space-x-2 items-start"><input v-model.number="newPublicExpense.inputAmount" type="number" placeholder="JPY 金額..." class="w-full bg-stone/5 border-none rounded-2xl px-4 py-3 text-sm font-mono"><button @click="addPublicExpense" class="bg-camel-400 text-white w-12 h-[44px] rounded-2xl flex items-center justify-center"><i class="fa-solid fa-plus"></i></button></div></div></div>
                     <div>
-                        <h4 class="text-[10px] text-stone tracking-widest uppercase font-bold mb-3 pl-2 border-l-2 border-stone/30 flex justify-between items-center">
-                            <span>支出明細 (History)</span>
-                            <span class="text-[9px] bg-stone/10 px-1.5 rounded text-stone/60">{{ publicExpenses.length }}</span>
-                        </h4>
-                        <div v-if="publicExpenses.length === 0" class="text-center py-8 border-2 border-dashed border-stone/5 rounded-2xl">
-                            <p class="text-stone/30 text-xs font-medium tracking-wider">NO RECORDS</p>
-                        </div>
-                        <div v-else class="space-y-2 max-h-[250px] overflow-y-auto pr-1 scrollbar-thin">
-                            <div v-for="(item, index) in publicExpenses.slice().reverse()" :key="item.id" class="flex justify-between items-center p-3.5 bg-stone/5 rounded-2xl group hover:bg-white hover:shadow-card hover:-translate-y-0.5 transition-all duration-300 border border-transparent hover:border-stone/5">
-                                <div class="flex-1 min-w-0 mr-3">
-                                    <div class="text-sm font-medium text-sumi truncate">{{ item.name }}</div>
-                                    <div class="text-[9px] text-stone mt-1 flex items-center">
-                                        <i class="fa-regular fa-clock mr-1 opacity-50"></i>{{ item.date }}
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-3">
-                                    <span class="font-mono text-sm font-bold text-sumi">NT$ {{ Math.round(item.amount).toLocaleString() }}</span>
-                                    <button v-if="item.image" @click.stop="openImageModal(item.image)" class="w-7 h-7 rounded-full bg-white text-stone/40 hover:text-clover-500 hover:shadow-sm flex items-center justify-center transition">
-                                        <i class="fa-regular fa-image text-[10px]"></i>
-                                    </button>
-                                    <button @click="askDelete('publicExpense', item.id)" class="w-7 h-7 rounded-full bg-white text-stone/40 hover:text-red-400 hover:shadow-sm flex items-center justify-center transition opacity-0 group-hover:opacity-100"><i class="fa-solid fa-trash-can text-[10px]"></i></button>
-                                </div>
-                            </div>
-                        </div>
+                        <h4 class="text-[10px] text-stone tracking-widest uppercase font-bold mb-3 pl-2 border-l-2 border-stone/30">明細 ({{ publicExpenses.length }})</h4>
+                        <div v-for="item in publicExpenses.slice().reverse()" :key="item.id" class="flex justify-between items-center p-3.5 bg-stone/5 rounded-2xl mb-2"><div class="flex-1 min-w-0 mr-3"><div class="text-sm font-medium text-sumi truncate">{{ item.name }}</div><div class="text-[9px] text-stone mt-1">{{ item.date }}</div></div><div class="flex items-center space-x-3"><span class="font-mono text-sm font-bold text-sumi">NT$ {{ Math.round(item.amount).toLocaleString() }}</span><button v-if="!isLocked" @click="askDelete('publicExpense', item.id)" class="text-stone/40 hover:text-red-400"><i class="fa-solid fa-trash-can text-[10px]"></i></button></div></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Tab: Map -->
+            <!-- Map -->
             <div v-if="currentTab === 'map'" class="pb-32 animate-fade-in-up space-y-6 pt-2">
                 <div>
-                    <div class="flex justify-between items-end px-2 mb-3">
-                         <h3 class="text-[10px] text-stone tracking-widest uppercase font-bold">常用位置地圖</h3>
-                    </div>
+                    <h3 class="text-[10px] text-stone tracking-widest uppercase font-bold mb-3 px-2">常用位置</h3>
                     <div class="space-y-3">
                          <div v-if="locations.length === 0" class="text-center py-8 text-stone/40 text-xs">尚無常用位置</div>
-                        <div v-for="loc in locations" :key="loc.id" class="bg-white rounded-[24px] p-5 shadow-card hover:shadow-soft transition-all duration-300 group relative">
+                        <div v-for="loc in locations" :key="loc.id" class="bg-white rounded-[24px] p-5 shadow-card group relative">
                             <div class="flex justify-between items-start">
                                 <div class="flex-1">
-                                    <div class="flex items-center space-x-2 mb-1">
-                                        <i class="fa-solid fa-location-dot text-clover-400"></i>
-                                        <h4 class="text-lg font-medium text-sumi">{{ loc.name }}</h4>
-                                    </div>
+                                    <div class="flex items-center space-x-2 mb-1"><i class="fa-solid fa-location-dot text-clover-400"></i><h4 class="text-lg font-medium text-sumi">{{ loc.name }}</h4></div>
                                     <p class="text-xs text-stone pl-6 mb-3">{{ loc.description }}</p>
-                                    <a v-if="loc.url" :href="loc.url" target="_blank" class="inline-flex items-center space-x-1 text-[10px] font-bold text-camel-400 bg-camel-50 px-3 py-1.5 rounded-full hover:bg-camel-400 hover:text-white transition-colors ml-6">
-                                        <i class="fa-solid fa-map-location-dot"></i><span>Google Maps</span>
-                                    </a>
+                                    <a v-if="loc.url" :href="loc.url" target="_blank" class="inline-flex items-center space-x-1 text-[10px] font-bold text-camel-400 bg-camel-50 px-3 py-1.5 rounded-full ml-6"><i class="fa-solid fa-map-location-dot"></i><span>Google Maps</span></a>
                                 </div>
-                                <div class="flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                     <button @click="editLocation(loc)" class="w-8 h-8 rounded-full bg-clover-50 text-stone hover:text-clover-500 flex items-center justify-center"><i class="fa-solid fa-pen text-xs"></i></button>
-                                     <button @click="askDelete('location', loc.id)" class="w-8 h-8 rounded-full bg-clover-50 text-stone hover:text-red-400 flex items-center justify-center"><i class="fa-solid fa-trash-can text-xs"></i></button>
-                                </div>
+                                <div v-if="!isLocked" class="flex flex-col space-y-2"><button @click="editLocation(loc)" class="w-8 h-8 rounded-full bg-clover-50 text-stone hover:text-clover-500 flex items-center justify-center"><i class="fa-solid fa-pen text-xs"></i></button><button @click="askDelete('location', loc.id)" class="w-8 h-8 rounded-full bg-clover-50 text-stone hover:text-red-400 flex items-center justify-center"><i class="fa-solid fa-trash-can text-xs"></i></button></div>
                             </div>
                         </div>
                     </div>
-                    <div class="flex justify-center mt-6">
-                        <button @click="openLocationModal" class="w-14 h-14 rounded-full bg-white border-2 border-dashed border-clover-200 text-clover-400 flex items-center justify-center hover:bg-clover-50 hover:border-clover-300 hover:text-clover-500 transition-all duration-300 shadow-sm group">
-                            <i class="fa-solid fa-plus text-xl group-hover:scale-110 transition-transform"></i>
-                        </button>
-                    </div>
+                    <div v-if="!isLocked" class="flex justify-center mt-6"><button @click="openLocationModal" class="w-14 h-14 rounded-full bg-white border-2 border-dashed border-clover-200 text-clover-400 flex items-center justify-center hover:bg-clover-50 shadow-sm"><i class="fa-solid fa-plus text-xl"></i></button></div>
                 </div>
-
                 <div class="bg-white rounded-[32px] p-6 shadow-card">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-[10px] text-stone tracking-widest uppercase font-bold border-l-2 border-clover-300 pl-2">未來一周天氣</h3>
-                        <select v-model="weatherCity" @change="fetchWeather" class="text-xs font-bold text-clover-600 bg-clover-50 border-none rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-clover-200 outline-none cursor-pointer">
-                            <option value="Nagoya">名古屋</option>
-                            <option value="Nagano">長野</option>
-                            <option value="Kanazawa">金澤</option>
-                            <option value="Takayama">高山</option>
-                            <option value="Matsumoto">松本</option>
-                            <option value="Shirakawa">合掌村</option>
-                        </select>
-                    </div>
-                    <div v-if="!weatherData.daily" class="text-center py-8 text-stone/40">
-                         <i class="fa-solid fa-spinner fa-spin mb-2"></i>
-                         <p class="text-xs">Loading Weather...</p>
-                    </div>
-                    <div v-else class="flex overflow-x-auto no-scrollbar space-x-4 pb-2">
-                        <div v-for="(day, index) in 7" :key="index" class="flex-shrink-0 flex flex-col items-center min-w-[4rem] bg-clover-50/50 rounded-2xl py-3 px-1">
-                            <span class="text-[10px] text-stone font-bold uppercase mb-1">{{ getWeatherDay(index) }}</span>
-                            <span class="text-[9px] text-stone/50 mb-2">{{ getWeatherDate(index) }}</span>
-                            <i :class="getWeatherIcon(weatherData.daily.weathercode[index])" class="text-xl text-clover-400 mb-2"></i>
-                            <div class="flex flex-col items-center text-[10px] font-mono font-medium text-sumi">
-                                <span>{{ Math.round(weatherData.daily.temperature_2m_max[index]) }}°</span>
-                                <span class="w-4 h-[1px] bg-stone/20 my-0.5"></span>
-                                <span class="text-stone">{{ Math.round(weatherData.daily.temperature_2m_min[index]) }}°</span>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="flex justify-between items-center mb-6"><h3 class="text-[10px] text-stone tracking-widest uppercase font-bold border-l-2 border-clover-300 pl-2">未來一周天氣</h3><select v-model="weatherCity" @change="fetchWeather" class="text-xs font-bold text-clover-600 bg-clover-50 border-none rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-clover-200 outline-none"><option value="Nagoya">名古屋</option><option value="Takayama">高山</option><option value="Shirakawa">合掌村</option><option value="Kanazawa">金澤</option></select></div>
+                    <div v-if="!weatherData.daily" class="text-center py-8 text-stone/40"><i class="fa-solid fa-spinner fa-spin mb-2"></i></div>
+                    <div v-else class="flex overflow-x-auto no-scrollbar space-x-4 pb-2"><div v-for="(day, index) in 7" :key="index" class="flex-shrink-0 flex flex-col items-center min-w-[4rem] bg-clover-50/50 rounded-2xl py-3 px-1"><span class="text-[10px] text-stone font-bold uppercase mb-1">{{ getWeatherDay(index) }}</span><i :class="getWeatherIcon(weatherData.daily.weathercode[index])" class="text-xl text-clover-400 mb-2"></i><div class="flex flex-col items-center text-[10px] font-mono font-medium text-sumi"><span>{{ Math.round(weatherData.daily.temperature_2m_max[index]) }}°</span><span class="text-stone">{{ Math.round(weatherData.daily.temperature_2m_min[index]) }}°</span></div></div></div>
                 </div>
             </div>
 
-            <!-- Tab: Broadcast -->
+            <!-- Broadcast -->
             <div v-if="currentTab === 'broadcast'" class="h-full flex flex-col pb-4 animate-fade-in-up">
                 <div class="flex-1 overflow-y-auto space-y-6 pb-4 pt-2 px-2" ref="msgContainer">
-                    <div v-if="messages.length === 0" class="text-center py-32 opacity-30">
-                        <i class="fa-regular fa-comments text-4xl mb-4 text-stone"></i>
-                        <p class="text-xs text-stone tracking-widest">START CONVERSATION</p>
-                    </div>
+                    <div v-if="messages.length === 0" class="text-center py-32 opacity-30"><i class="fa-regular fa-comments text-4xl mb-4 text-stone"></i><p class="text-xs text-stone tracking-widest">START CONVERSATION</p></div>
                     <div v-for="msg in messages" :key="msg.id" class="flex flex-col items-start group">
                         <div class="flex items-end space-x-3 max-w-[90%]">
                             <div class="w-8 h-8 rounded-2xl bg-white border border-clover-100 text-clover-500 flex items-center justify-center text-[10px] font-bold flex-shrink-0 shadow-sm mb-1">{{ msg.user.substring(0,1) }}</div>
                             <div>
                                 <span class="text-[9px] text-stone ml-2 mb-1 block tracking-wide">{{ msg.user }}</span>
-                                <div class="bg-white px-5 py-3 rounded-2xl rounded-tl-none shadow-card text-sm text-sumi relative leading-relaxed">
-                                    {{ msg.text }}
-                                    <div class="text-[9px] text-stone/50 text-right mt-1 font-mono">{{ msg.time }}</div>
-                                    <button @click="askDelete('message', msg.id)" class="absolute -top-2 -right-2 bg-clover-50 text-stone hover:text-red-400 rounded-full w-5 h-5 hidden group-hover:flex items-center justify-center text-[10px] shadow-sm border border-stone/10"><i class="fa-solid fa-times"></i></button>
-                                </div>
+                                <div class="bg-white px-5 py-3 rounded-2xl rounded-tl-none shadow-card text-sm text-sumi relative leading-relaxed">{{ msg.text }}<div class="text-[9px] text-stone/50 text-right mt-1 font-mono">{{ msg.time }}</div><button v-if="!isLocked" @click="askDelete('message', msg.id)" class="absolute -top-2 -right-2 bg-clover-50 text-stone hover:text-red-400 rounded-full w-5 h-5 hidden group-hover:flex items-center justify-center text-[10px] shadow-sm border border-stone/10"><i class="fa-solid fa-times"></i></button></div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="bg-white p-5 pb-8 shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.05)] rounded-t-[32px] border-t border-clover-50">
-                    <div class="grid grid-cols-4 gap-2 mb-4">
-                        <button v-for="m in members" :key="m" @click="msgUser = m" :class="msgUser === m ? 'bg-clover-300 text-white shadow-md shadow-clover-100' : 'bg-clover-50/50 text-stone hover:bg-clover-50'" class="py-2 rounded-xl text-[10px] font-medium transition-all duration-200 truncate">{{ m }}</button>
-                    </div>
                     <div class="flex flex-col space-y-3">
-                        <input v-model="msgText" placeholder="Write a message..." class="w-full bg-clover-50/50 rounded-2xl p-4 border border-transparent focus:border-clover-100 focus:bg-white transition-all duration-300 outline-none text-sm text-sumi placeholder-stone/50" @keyup.enter="sendMessage" enterkeyhint="send">
-                        <button @click="sendMessage" class="w-full py-3 bg-clover-300 text-white rounded-2xl hover:bg-clover-400 hover:shadow-lg hover:shadow-clover-200 transition flex items-center justify-center shadow-sm group">
-                            <span class="text-[10px] font-bold tracking-widest mr-2 group-hover:mr-3 transition-all">SEND</span>
-                            <i class="fa-solid fa-paper-plane text-xs"></i>
-                        </button>
+                        <input v-model="msgText" placeholder="Write a message..." class="w-full bg-clover-50/50 rounded-2xl p-4 border border-transparent focus:border-clover-100 focus:bg-white transition-all duration-300 outline-none text-sm text-sumi" @keyup.enter="sendMessage" enterkeyhint="send">
+                        <button @click="sendMessage" class="w-full py-3 bg-clover-300 text-white rounded-2xl hover:bg-clover-400 shadow-sm flex items-center justify-center font-bold tracking-widest text-[10px]">SEND <i class="fa-solid fa-paper-plane ml-2"></i></button>
                     </div>
                 </div>
             </div>
 
-            <!-- Tab: Info (Shopping List) -->
+            <!-- Info (Shopping) -->
             <div v-if="currentTab === 'info'" class="pb-32 animate-fade-in-up pt-2">
                 <div class="px-2 mb-4">
                     <h2 class="text-[10px] tracking-widest font-bold uppercase text-stone mb-4 pl-4 border-l-2 border-clover-300 flex justify-between items-center">
-                        <span>購買清單 (Shopping List)</span>
+                        <span>購買清單 (Shopping)</span>
                         <span v-if="currentShoppingMember" class="text-clover-500 font-bold bg-clover-50 px-2 py-0.5 rounded-md">{{ currentShoppingMember }}</span>
                     </h2>
-                    
-                    <div class="mb-6 px-1">
-                        <div class="grid grid-cols-4 gap-2">
-                            <button v-for="member in members" :key="member" 
-                                @click="toggleShoppingMember(member)" 
-                                :class="currentShoppingMember === member ? 'bg-clover-300 text-white shadow-md shadow-clover-200' : 'bg-white text-stone border border-stone/10 hover:bg-clover-50'" 
-                                class="py-2.5 rounded-xl text-xs font-medium transition-all duration-300 truncate">
-                                {{ member }}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div v-if="filteredShoppingList.length === 0" class="flex flex-col items-center justify-center py-20 text-stone/30">
-                        <i class="fa-solid fa-basket-shopping text-4xl mb-4 opacity-30 text-clover-300"></i>
-                        <p class="font-light text-xs tracking-[0.2em]">EMPTY LIST</p>
-                    </div>
+                    <div class="mb-6 px-1 grid grid-cols-4 gap-2"><button v-for="member in members" :key="member" @click="toggleShoppingMember(member)" :class="currentShoppingMember === member ? 'bg-clover-300 text-white shadow-md' : 'bg-white text-stone border border-stone/10'" class="py-2.5 rounded-xl text-xs font-medium transition-all truncate">{{ member }}</button></div>
+                    <div v-if="filteredShoppingList.length === 0" class="flex flex-col items-center justify-center py-20 text-stone/30"><i class="fa-solid fa-basket-shopping text-4xl mb-4 opacity-30 text-clover-300"></i><p class="font-light text-xs tracking-[0.2em]">EMPTY LIST</p></div>
 
                     <div class="space-y-4 px-1 mb-8">
-                        <div v-for="item in filteredShoppingList" :key="item.id" class="bg-white rounded-[24px] p-5 shadow-card hover:shadow-soft transition-all duration-300 group relative flex flex-col">
-                            <div v-if="item.owner" class="absolute top-4 left-4 z-10">
-                                <span class="bg-white/90 backdrop-blur-md text-clover-600 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">{{ item.owner }}</span>
+                        <div v-for="item in sortedShoppingList" :key="item.id" class="bg-white rounded-[24px] p-5 shadow-card group relative flex flex-col transition-all duration-300" :class="item.isBought ? 'opacity-60 grayscale' : ''">
+                            <div v-if="item.owner" class="absolute top-4 left-4 z-10"><span class="bg-white/90 backdrop-blur-md text-clover-600 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">{{ item.owner }}</span></div>
+                            <div class="absolute top-4 right-4 z-10 flex space-x-2">
+                                <a v-if="item.link" :href="item.link" target="_blank" class="w-9 h-9 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-clover-500 shadow-sm" @click.stop><i class="fa-solid fa-link text-sm"></i></a>
+                                <!-- Check Button (New) -->
+                                <button @click="toggleBought(item)" class="w-9 h-9 backdrop-blur-md rounded-full flex items-center justify-center shadow-sm transition-colors" :class="item.isBought ? 'bg-clover-500 text-white' : 'bg-white/90 text-stone/30 hover:text-clover-500'"><i class="fa-solid fa-check text-sm"></i></button>
                             </div>
-
-                            <a v-if="item.link" :href="item.link" target="_blank" class="absolute top-4 right-4 z-10 w-9 h-9 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-clover-500 shadow-sm hover:bg-clover-500 hover:text-white transition-colors" @click.stop>
-                                <i class="fa-solid fa-link text-sm"></i>
-                            </a>
 
                             <div class="relative w-full aspect-[4/3] mb-4 rounded-2xl overflow-hidden bg-clover-50/50 border border-stone/5">
-                                <img v-if="item.image" :src="item.image" class="w-full h-full object-cover" alt="item">
-                                <div v-else class="w-full h-full flex items-center justify-center text-clover-200">
-                                    <i class="fa-solid fa-image text-4xl"></i>
-                                </div>
+                                <img v-if="item.image" :src="item.image" class="w-full h-full object-cover">
+                                <div v-else class="w-full h-full flex items-center justify-center text-clover-200"><i class="fa-solid fa-image text-4xl"></i></div>
                             </div>
                             
-                            <h3 class="font-bold text-sumi text-lg mb-2 px-1">{{ item.name }}</h3>
+                            <h3 class="font-bold text-sumi text-lg mb-2 px-1" :class="item.isBought ? 'line-through decoration-clover-500' : ''">{{ item.name }}</h3>
                             <p class="text-sm text-stone px-1 leading-7 whitespace-pre-wrap">{{ item.description }}</p>
                             
-                            <div class="flex justify-end space-x-3 mt-4 pt-3 border-t border-clover-50">
-                                <button @click="editShopping(item)" class="text-xs text-stone hover:text-clover-500 transition-colors flex items-center px-2 py-1"><i class="fa-solid fa-pen mr-1.5"></i> Edit</button>
-                                <button @click="askDelete('shopping', item.id)" class="text-xs text-stone hover:text-red-400 transition-colors flex items-center px-2 py-1"><i class="fa-solid fa-trash-can mr-1.5"></i> Delete</button>
+                            <div v-if="!isLocked" class="flex justify-end space-x-3 mt-4 pt-3 border-t border-clover-50">
+                                <button @click="editShopping(item)" class="text-xs text-stone hover:text-clover-500 flex items-center px-2 py-1"><i class="fa-solid fa-pen mr-1.5"></i> Edit</button>
+                                <button @click="askDelete('shopping', item.id)" class="text-xs text-stone hover:text-red-400 flex items-center px-2 py-1"><i class="fa-solid fa-trash-can mr-1.5"></i> Delete</button>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="flex justify-center pb-8 pt-4 border-t border-dashed border-stone/10">
-                         <button @click="openShoppingModal" class="flex items-center space-x-2 bg-clover-300 text-white py-3 px-8 rounded-full shadow-lg shadow-clover-200 hover:bg-clover-400 hover:scale-105 transition-all duration-300 group">
-                            <i class="fa-solid fa-plus text-sm group-hover:rotate-90 transition-transform"></i>
-                            <span class="text-xs font-bold tracking-widest">ADD ITEM</span>
-                        </button>
-                    </div>
+                    <div v-if="!isLocked" class="flex justify-center pb-8 pt-4 border-t border-dashed border-stone/10"><button @click="openShoppingModal" class="flex items-center space-x-2 bg-clover-300 text-white py-3 px-8 rounded-full shadow-lg shadow-clover-200 hover:bg-clover-400 transition-all group"><i class="fa-solid fa-plus text-sm"></i><span class="text-xs font-bold tracking-widest">ADD ITEM</span></button></div>
                 </div>
             </div>
 
@@ -643,87 +363,33 @@
         <!-- Modals -->
         <div v-if="showTrafficModal" class="absolute inset-0 bg-sumi/10 backdrop-blur-[2px] z-50 flex items-end sm:items-center justify-center">
             <div class="bg-white w-full sm:w-[400px] sm:rounded-[32px] rounded-t-[32px] p-8 shadow-2xl animate-fade-in-up max-h-[90vh] overflow-y-auto">
-                <div class="flex justify-between items-center mb-8">
-                    <h3 class="text-lg font-bold text-sumi tracking-wide flex items-center">
-                        <i class="fa-solid fa-pen-to-square text-clover-300 mr-2"></i> {{ isEditingTraffic ? 'Edit Transport' : 'Add Transport' }}
-                    </h3>
-                    <button @click="showTrafficModal = false" class="w-8 h-8 rounded-full bg-clover-50 text-stone hover:bg-stone/10 flex items-center justify-center transition"><i class="fa-solid fa-times"></i></button>
-                </div>
+                <div class="flex justify-between items-center mb-8"><h3 class="text-lg font-bold text-sumi tracking-wide"><i class="fa-solid fa-pen-to-square text-clover-300 mr-2"></i> {{ isEditingTraffic ? 'Edit' : 'Add' }} Transport</h3><button @click="showTrafficModal = false" class="w-8 h-8 rounded-full bg-clover-50 text-stone hover:bg-stone/10 flex items-center justify-center"><i class="fa-solid fa-times"></i></button></div>
                 <div class="space-y-5">
-                    <div>
-                        <label class="text-[10px] font-bold text-stone tracking-widest block mb-3">TYPE</label>
-                        <div class="grid grid-cols-5 gap-2">
-                            <button v-for="t in ['plane', 'train', 'bus', 'taxi', 'walk']" :key="t" @click="trafficModalData.type = t" :class="trafficModalData.type === t ? 'bg-clover-300 text-white shadow-md shadow-clover-200' : 'bg-clover-50 text-stone hover:bg-clover-100'" class="p-3 rounded-2xl flex justify-center items-center transition-all duration-300 aspect-square"><i :class="getTransportIcon(t)" class="text-lg"></i></button>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label class="text-[10px] font-bold text-stone tracking-widest block mb-2">START</label><input v-model="trafficModalData.time" type="time" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm outline-none focus:ring-2 focus:ring-clover-100 text-sumi font-mono"></div>
-                        <div><label class="text-[10px] font-bold text-stone tracking-widest block mb-2">END</label><input v-model="trafficModalData.endTime" type="time" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm outline-none focus:ring-2 focus:ring-clover-100 text-sumi font-mono"></div>
-                    </div>
-                    <div><label class="text-[10px] font-bold text-stone tracking-widest block mb-2">DESTINATION</label><input v-model="trafficModalData.destination" type="text" placeholder="e.g. Nagoya Station" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm outline-none focus:ring-2 focus:ring-clover-100 text-sumi placeholder-stone/40"></div>
-                    <div><label class="text-[10px] font-bold text-stone tracking-widest block mb-2">NOTE</label><textarea v-model="trafficModalData.description" placeholder="Details..." class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm outline-none focus:ring-2 focus:ring-clover-100 text-sumi placeholder-stone/40 h-24 resize-none"></textarea></div>
-                    <div class="grid grid-cols-1 gap-3">
-                         <div class="relative"><i class="fa-solid fa-link absolute left-4 top-4 text-stone/40 text-xs"></i><input v-model="trafficModalData.url" type="text" placeholder="Info Link" class="w-full bg-clover-50 border-none rounded-2xl p-4 pl-10 text-sm outline-none focus:ring-2 focus:ring-clover-100 text-clover-600 placeholder-stone/40"></div>
-                         <div class="relative"><i class="fa-solid fa-ticket absolute left-4 top-4 text-stone/40 text-xs"></i><input v-model="trafficModalData.ticketUrl" type="text" placeholder="Ticket Link" class="w-full bg-clover-50 border-none rounded-2xl p-4 pl-10 text-sm outline-none focus:ring-2 focus:ring-clover-100 text-camel-500 placeholder-stone/40"></div>
-                    </div>
-                    <button @click="saveTraffic" class="w-full py-4 rounded-2xl bg-clover-300 text-white font-medium shadow-lg shadow-clover-200 hover:bg-clover-400 transition duration-300 mt-2">Save Schedule</button>
+                    <div class="grid grid-cols-5 gap-2"><button v-for="t in ['plane', 'train', 'bus', 'taxi', 'walk']" :key="t" @click="trafficModalData.type = t" :class="trafficModalData.type === t ? 'bg-clover-300 text-white shadow-md' : 'bg-clover-50 text-stone'" class="p-3 rounded-2xl flex justify-center items-center aspect-square"><i :class="getTransportIcon(t)" class="text-lg"></i></button></div>
+                    <div class="grid grid-cols-2 gap-4"><div><label class="text-[10px] font-bold text-stone tracking-widest block mb-2">START</label><input v-model="trafficModalData.time" type="time" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm font-mono"></div><div><label class="text-[10px] font-bold text-stone tracking-widest block mb-2">END</label><input v-model="trafficModalData.endTime" type="time" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm font-mono"></div></div>
+                    <div><label class="text-[10px] font-bold text-stone tracking-widest block mb-2">DESTINATION</label><input v-model="trafficModalData.destination" type="text" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"></div>
+                    <div><label class="text-[10px] font-bold text-stone tracking-widest block mb-2">NOTE</label><textarea v-model="trafficModalData.description" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm h-24 resize-none"></textarea></div>
+                    <div class="grid grid-cols-1 gap-3"><input v-model="trafficModalData.url" type="text" placeholder="Info Link" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"><input v-model="trafficModalData.ticketUrl" type="text" placeholder="Ticket Link" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"></div>
+                    <button @click="saveTraffic" class="w-full py-4 rounded-2xl bg-clover-300 text-white font-medium shadow-lg hover:bg-clover-400 mt-2">Save</button>
                 </div>
             </div>
         </div>
         
         <div v-if="showLocationModal" class="absolute inset-0 bg-sumi/10 backdrop-blur-[2px] z-50 flex items-end sm:items-center justify-center p-6">
              <div class="bg-white w-full max-w-xs rounded-[32px] p-8 shadow-2xl animate-fade-in-up">
-                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-lg font-bold text-sumi tracking-wide">{{ isEditingLocation ? 'Edit Location' : 'Add Location' }}</h3>
-                    <button @click="showLocationModal = false" class="w-8 h-8 rounded-full bg-clover-50 text-stone hover:bg-stone/10 flex items-center justify-center transition"><i class="fa-solid fa-times"></i></button>
-                </div>
-                <div class="space-y-4">
-                    <input v-model="locationModalData.name" type="text" placeholder="地點名稱 (Name)" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm outline-none focus:ring-2 focus:ring-clover-100 text-sumi">
-                    <input v-model="locationModalData.description" type="text" placeholder="地點描述 (Desc)" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm outline-none focus:ring-2 focus:ring-clover-100 text-sumi">
-                    <input v-model="locationModalData.url" type="text" placeholder="Google Maps URL" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm outline-none focus:ring-2 focus:ring-clover-100 text-sumi">
-                    <button @click="saveLocation" class="w-full py-3 rounded-2xl bg-clover-300 text-white font-medium shadow-lg shadow-clover-200 hover:bg-clover-400 transition duration-300 mt-2">Save</button>
-                </div>
+                 <div class="flex justify-between items-center mb-6"><h3 class="text-lg font-bold text-sumi tracking-wide">Location</h3><button @click="showLocationModal = false" class="w-8 h-8 rounded-full bg-clover-50 text-stone hover:bg-stone/10 flex items-center justify-center"><i class="fa-solid fa-times"></i></button></div>
+                <div class="space-y-4"><input v-model="locationModalData.name" type="text" placeholder="Name" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"><input v-model="locationModalData.description" type="text" placeholder="Description" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"><input v-model="locationModalData.url" type="text" placeholder="Google Maps URL" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"><button @click="saveLocation" class="w-full py-3 rounded-2xl bg-clover-300 text-white font-medium shadow-lg mt-2">Save</button></div>
             </div>
         </div>
 
         <div v-if="showShoppingModal" class="absolute inset-0 bg-sumi/10 backdrop-blur-[2px] z-50 flex items-end sm:items-center justify-center p-6">
             <div class="bg-white w-full max-w-xs rounded-[32px] p-8 shadow-2xl animate-fade-in-up">
-                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-lg font-bold text-sumi tracking-wide">{{ isEditingShopping ? 'Edit Item' : 'Add Item' }}</h3>
-                    <button @click="showShoppingModal = false" class="w-8 h-8 rounded-full bg-clover-50 text-stone hover:bg-stone/10 flex items-center justify-center transition"><i class="fa-solid fa-times"></i></button>
-                </div>
+                 <div class="flex justify-between items-center mb-6"><h3 class="text-lg font-bold text-sumi tracking-wide">Item</h3><button @click="showShoppingModal = false" class="w-8 h-8 rounded-full bg-clover-50 text-stone hover:bg-stone/10 flex items-center justify-center"><i class="fa-solid fa-times"></i></button></div>
                 <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-1 -mr-1">
-                    <div class="relative w-full aspect-video bg-clover-50 rounded-2xl overflow-hidden border-2 border-dashed border-clover-200 hover:border-clover-300 transition group cursor-pointer" @click="$refs.fileInput.click()">
-                        <input type="file" ref="fileInput" accept="image/*" class="hidden" @change="handleImageUpload">
-                        <img v-if="shoppingModalData.image" :src="shoppingModalData.image" class="w-full h-full object-cover">
-                        <div v-else class="absolute inset-0 flex flex-col items-center justify-center text-clover-300">
-                            <i class="fa-solid fa-camera text-2xl mb-2 group-hover:scale-110 transition-transform"></i>
-                            <span class="text-[10px] font-bold tracking-widest">ADD PHOTO</span>
-                        </div>
-                    </div>
-                    
-                    <input v-model="shoppingModalData.name" type="text" placeholder="物品名稱 (Name)" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm outline-none focus:ring-2 focus:ring-clover-100 text-sumi">
-                    
-                    <div class="relative">
-                        <i class="fa-solid fa-link absolute left-4 top-4 text-stone/40 text-xs"></i>
-                        <input v-model="shoppingModalData.link" type="text" placeholder="參考連結 (Link)" class="w-full bg-clover-50 border-none rounded-2xl p-4 pl-10 text-sm outline-none focus:ring-2 focus:ring-clover-100 text-clover-600 placeholder-stone/40">
-                    </div>
-
-                    <textarea v-model="shoppingModalData.description" placeholder="內容描述 (Description)" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm outline-none focus:ring-2 focus:ring-clover-100 text-sumi h-24 resize-none"></textarea>
-                    
-                    <div>
-                        <label class="text-[10px] font-bold text-stone tracking-widest block mb-2 pl-1">歸屬成員 (OWNER)</label>
-                        <div class="grid grid-cols-4 gap-2">
-                             <button v-for="member in members" :key="member" 
-                                @click="shoppingModalData.owner = member" 
-                                :class="shoppingModalData.owner === member ? 'bg-camel-300 text-white shadow-md shadow-camel-200' : 'bg-clover-50 text-stone hover:bg-clover-100'" 
-                                class="py-2 rounded-xl text-[10px] font-medium transition-all duration-300 truncate">
-                                {{ member }}
-                            </button>
-                        </div>
-                    </div>
-
-                    <button @click="saveShoppingItem" class="w-full py-3 rounded-2xl bg-clover-300 text-white font-medium shadow-lg shadow-clover-200 hover:bg-clover-400 transition duration-300 mt-2">Save Item</button>
+                    <div class="relative w-full aspect-video bg-clover-50 rounded-2xl overflow-hidden border-2 border-dashed border-clover-200 hover:border-clover-300 transition group cursor-pointer" @click="$refs.fileInput.click()"><input type="file" ref="fileInput" accept="image/*" class="hidden" @change="handleImageUpload"><img v-if="shoppingModalData.image" :src="shoppingModalData.image" class="w-full h-full object-cover"><div v-else class="absolute inset-0 flex flex-col items-center justify-center text-clover-300"><i class="fa-solid fa-camera text-2xl mb-2"></i><span class="text-[10px] font-bold tracking-widest">ADD PHOTO</span></div></div>
+                    <input v-model="shoppingModalData.name" type="text" placeholder="Name" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"><input v-model="shoppingModalData.link" type="text" placeholder="Link" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"><textarea v-model="shoppingModalData.description" placeholder="Description" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm h-24 resize-none"></textarea>
+                    <div><label class="text-[10px] font-bold text-stone tracking-widest block mb-2 pl-1">OWNER</label><div class="grid grid-cols-4 gap-2"><button v-for="member in members" :key="member" @click="shoppingModalData.owner = member" :class="shoppingModalData.owner === member ? 'bg-camel-300 text-white shadow-md' : 'bg-clover-50 text-stone hover:bg-clover-100'" class="py-2 rounded-xl text-[10px] font-medium transition-all truncate">{{ member }}</button></div></div>
+                    <button @click="saveShoppingItem" class="w-full py-3 rounded-2xl bg-clover-300 text-white font-medium shadow-lg mt-2">Save</button>
                 </div>
             </div>
         </div>
@@ -753,6 +419,9 @@ const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
 createApp({
     setup() {
         const isLoading = ref(true);
+        const currentUser = ref(null); // New: Identity
+        const isLocked = ref(false);   // New: Lock Mode
+
         const currentTab = ref('traffic');
         const currentDay = ref(1);
         const days = ref([1, 2, 3, 4, 5, 6, 7]); 
@@ -776,7 +445,7 @@ createApp({
         const showShoppingModal = ref(false);
         const isEditingShopping = ref(false);
         const editingShoppingId = ref(null);
-        const shoppingModalData = ref({ name: '', description: '', image: '', owner: '', link: '' });
+        const shoppingModalData = ref({ name: '', description: '', image: '', owner: '', link: '', isBought: false });
         const currentShoppingMember = ref(null);
         const publicExpenses = ref([]);
         const publicFundTotal = ref(0);
@@ -805,7 +474,7 @@ createApp({
                 const res = await fetch('https://api.exchangerate-api.com/v4/latest/JPY');
                 const data = await res.json();
                 if(data && data.rates && data.rates.TWD) exchangeRate.value = parseFloat(data.rates.TWD.toFixed(3));
-            } catch(e) { console.error('匯率失敗:', e); }
+            } catch(e) {}
         };
 
         const processImage = (file, callback) => {
@@ -829,7 +498,20 @@ createApp({
             reader.readAsDataURL(file);
         };
 
+        const setUser = (name) => {
+            currentUser.value = name;
+            localStorage.setItem('nagoya_user', name);
+            // Auto-set initial values
+            newExpense.value.payer = name;
+            msgUser.value = name;
+            shoppingModalData.value.owner = name;
+        };
+
         onMounted(() => {
+            // Check Local Storage
+            const savedUser = localStorage.getItem('nagoya_user');
+            if(savedUser && members.value.includes(savedUser)) setUser(savedUser);
+
             let loadCheck = 0;
             const checkLoad = () => { loadCheck++; if(loadCheck >= 2) isLoading.value = false; };
             
@@ -842,9 +524,7 @@ createApp({
             onValue(dbRef(db, 'public_expenses'), (s) => { publicExpenses.value = s.val() || []; });
             onValue(dbRef(db, 'public_fund_total'), (s) => { if(s.val()) publicFundTotal.value = parseFloat(s.val()); });
             
-            // Fallback: 3秒後強制關閉 Loading，避免網路慢卡死
             setTimeout(() => isLoading.value = false, 3000);
-
             fetchRealTimeExchangeRate();
             fetchWeather();
         });
@@ -887,6 +567,7 @@ createApp({
         const remainingPublicFund = computed(() => publicFundTotal.value - totalPublicSpent.value);
         const publicFundPercentage = computed(() => publicFundTotal.value <= 0 ? 0 : Math.max(0, Math.min(100, (remainingPublicFund.value / publicFundTotal.value) * 100)));
         const filteredShoppingList = computed(() => !currentShoppingMember.value ? shoppingList.value : shoppingList.value.filter(item => item.owner === currentShoppingMember.value));
+        const sortedShoppingList = computed(() => [...filteredShoppingList.value].sort((a, b) => (a.isBought === b.isBought) ? 0 : a.isBought ? 1 : -1)); // Bought at bottom
 
         const askDelete = (type, id) => { confirmModal.value = { show: true, title: 'Delete Item?', message: 'Are you sure?', targetId: id, targetType: type }; };
         const confirmAction = () => {
@@ -906,6 +587,12 @@ createApp({
 
         const openTrafficModal = () => { isEditingTraffic.value = false; editingTrafficId.value = null; trafficModalData.value = { time: '09:00', endTime: '', type: 'train', destination: '', description: '', url: '', ticketUrl: '' }; showTrafficModal.value = true; };
         const editTraffic = (item) => { isEditingTraffic.value = true; editingTrafficId.value = item.id; trafficModalData.value = { ...item }; showTrafficModal.value = true; };
+        const copyTraffic = (item) => {
+            const newItem = { ...item, id: Date.now() }; // Clone
+            trafficList.value.push(newItem);
+            showToast('Item copied');
+        };
+
         const saveTraffic = () => {
             if (!trafficModalData.value.destination) { showToast('Please enter destination', 'error'); return; }
             if (isEditingTraffic.value) { const idx = trafficList.value.findIndex(x => x.id === editingTrafficId.value); if (idx !== -1) trafficList.value[idx] = { ...trafficModalData.value, id: editingTrafficId.value, day: currentDay.value }; } 
@@ -917,7 +604,7 @@ createApp({
         const addExpense = () => {
             if (!newExpense.value.description || !newExpense.value.inputAmount || !newExpense.value.payer) { showToast('Missing info', 'error'); return; }
             expenses.value.push({ description: newExpense.value.description, originalAmount: newExpense.value.inputAmount, originalCurrency: currencyMode.value, amount: calculatedTWD.value, payer: newExpense.value.payer, date: new Date().toLocaleDateString(), image: newExpense.value.image || '' });
-            newExpense.value = { description: '', inputAmount: '', payer: newExpense.value.payer, image: '' }; 
+            newExpense.value = { description: '', inputAmount: '', payer: currentUser.value || newExpense.value.payer, image: '' }; 
             showToast('Expense added');
         };
         
@@ -929,19 +616,27 @@ createApp({
             newPublicExpense.value = { name: '', inputAmount: '', currency: 'TWD', image: '' }; showToast('Added');
         };
 
-        const sendMessage = () => { if (!msgText.value.trim()) return; messages.value.push({ id: Date.now(), user: msgUser.value, text: msgText.value, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); msgText.value = ''; };
+        const sendMessage = () => { 
+            const user = currentUser.value || msgUser.value;
+            if (!msgText.value.trim()) return; 
+            messages.value.push({ id: Date.now(), user: user, text: msgText.value, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); 
+            msgText.value = ''; 
+        };
         const openLocationModal = () => { isEditingLocation.value = false; locationModalData.value = { name: '', description: '', url: '' }; showLocationModal.value = true; };
         const editLocation = (loc) => { isEditingLocation.value = true; editingLocationId.value = loc.id; locationModalData.value = { ...loc }; showLocationModal.value = true; };
         const saveLocation = () => { if(!locationModalData.value.name) { showToast('Name required', 'error'); return; } if(isEditingLocation.value) { const idx = locations.value.findIndex(l => l.id === editingLocationId.value); if(idx !== -1) locations.value[idx] = { ...locationModalData.value, id: editingLocationId.value }; } else locations.value.push({ id: Date.now(), ...locationModalData.value }); showLocationModal.value = false; showToast('Saved'); };
 
         const toggleShoppingMember = (m) => currentShoppingMember.value = currentShoppingMember.value === m ? null : m;
-        const openShoppingModal = () => { isEditingShopping.value = false; shoppingModalData.value = { name: '', description: '', image: '', owner: currentShoppingMember.value || members.value[0], link: '' }; showShoppingModal.value = true; };
+        const openShoppingModal = () => { isEditingShopping.value = false; shoppingModalData.value = { name: '', description: '', image: '', owner: currentShoppingMember.value || currentUser.value || members.value[0], link: '', isBought: false }; showShoppingModal.value = true; };
         const editShopping = (item) => { isEditingShopping.value = true; editingShoppingId.value = item.id; shoppingModalData.value = { ...item }; showShoppingModal.value = true; };
+        const toggleBought = (item) => {
+            const idx = shoppingList.value.findIndex(l => l.id === item.id);
+            if(idx !== -1) shoppingList.value[idx] = { ...item, isBought: !item.isBought };
+        };
         const saveShoppingItem = () => { if(!shoppingModalData.value.name) { showToast('Name required', 'error'); return; } if(isEditingShopping.value) { const idx = shoppingList.value.findIndex(l => l.id === editingShoppingId.value); if(idx !== -1) shoppingList.value[idx] = { ...shoppingModalData.value, id: editingShoppingId.value }; } else shoppingList.value.push({ id: Date.now(), ...shoppingModalData.value }); showShoppingModal.value = false; showToast('Saved'); };
 
         const fetchWeather = async () => { const coords = cityCoords[weatherCity.value]; if(!coords) return; try { const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo`); weatherData.value = await res.json(); } catch(e) {} };
         const getWeatherDay = (idx) => { const d = new Date(); d.setDate(d.getDate() + idx); return ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()]; };
-        const getWeatherDate = (idx) => { const d = new Date(); d.setDate(d.getDate() + idx); return `${d.getMonth()+1}/${d.getDate()}`; };
         const getWeatherIcon = (c) => (c===0?'fa-solid fa-sun':(c<=3?'fa-solid fa-cloud-sun':(c<=48?'fa-solid fa-smog':(c<=67?'fa-solid fa-cloud-rain':(c<=77?'fa-regular fa-snowflake':'fa-solid fa-cloud')))));
 
         const exportToCSV = () => {
@@ -952,7 +647,8 @@ createApp({
         };
 
         return {
-            isLoading, currentTab, currentDay, days, members, expenses, newExpense, totalExpense, debts, addExpense, messages, msgText, msgUser, sendMessage, msgContainer, askDelete, confirmModal, confirmAction, exchangeRate, currencyMode, calculatedTWD, trafficList, filteredTraffic, showTrafficModal, trafficModalData, openTrafficModal, saveTraffic, editTraffic, getTransportIcon, isEditingTraffic, toast, selectedPayerForDetail, payerExpenses, payerTotal, locations, showLocationModal, locationModalData, openLocationModal, editLocation, saveLocation, isEditingLocation, shoppingList, showShoppingModal, shoppingModalData, openShoppingModal, editShopping, saveShoppingItem, isEditingShopping, handleImageUpload, currentShoppingMember, toggleShoppingMember, filteredShoppingList, weatherCity, weatherData, fetchWeather, getWeatherDay, getWeatherDate, getWeatherIcon, publicExpenses, publicFundTotal, publicFundInput, publicFundCurrency, newPublicExpense, updatePublicFund, addPublicExpense, totalPublicSpent, remainingPublicFund, publicFundPercentage, handlePublicImage, handleExpenseImage, showImageModal, viewImageSrc, openImageModal, exportToCSV
+            isLoading, currentUser, setUser, isLocked,
+            currentTab, currentDay, days, members, expenses, newExpense, totalExpense, debts, addExpense, messages, msgText, msgUser, sendMessage, msgContainer, askDelete, confirmModal, confirmAction, exchangeRate, currencyMode, calculatedTWD, trafficList, filteredTraffic, showTrafficModal, trafficModalData, openTrafficModal, saveTraffic, editTraffic, copyTraffic, getTransportIcon, isEditingTraffic, toast, selectedPayerForDetail, payerExpenses, payerTotal, locations, showLocationModal, locationModalData, openLocationModal, editLocation, saveLocation, isEditingLocation, shoppingList, showShoppingModal, shoppingModalData, openShoppingModal, editShopping, saveShoppingItem, isEditingShopping, handleImageUpload, currentShoppingMember, toggleShoppingMember, filteredShoppingList, sortedShoppingList, toggleBought, weatherCity, weatherData, fetchWeather, getWeatherDay, getWeatherIcon, publicExpenses, publicFundTotal, publicFundInput, publicFundCurrency, newPublicExpense, updatePublicFund, addPublicExpense, totalPublicSpent, remainingPublicFund, publicFundPercentage, handlePublicImage, handleExpenseImage, showImageModal, viewImageSrc, openImageModal, exportToCSV
         };
     }
 }).mount('#app');
