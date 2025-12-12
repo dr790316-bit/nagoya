@@ -15,7 +15,6 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <!-- 優化: 移除了未使用的 Luxon 庫以提升載入速度 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
     
@@ -157,6 +156,7 @@
                     <div v-if="filteredTraffic.length === 0" class="flex flex-col items-center justify-center py-20 text-stone/30"><i class="fa-solid fa-leaf text-4xl mb-4 opacity-30 text-clover-300 animate-pulse"></i><p class="font-light text-xs tracking-[0.2em]">NO SCHEDULE</p></div>
                     <div v-if="filteredTraffic.length > 0" class="absolute top-6 bottom-12 left-[4.5rem] w-[1px] timeline-line z-0"></div>
                     
+                    <!-- 修正: isToday 邏輯已更新，只會在正確的日期顯示紅線 -->
                     <div v-if="isToday" class="absolute left-[4.5rem] w-full z-0 pointer-events-none" :style="{ top: currentTimePercent + '%' }">
                          <div class="w-3 h-3 bg-red-400 rounded-full absolute -left-1.5 -top-1.5 ring-4 ring-red-400/20"></div>
                          <div class="h-[1px] bg-red-400/50 w-full border-t border-dashed border-red-400"></div>
@@ -495,6 +495,8 @@ const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
 
 createApp({
     setup() {
+        // 修正: 引入 isRemoteUpdate 旗標以防止無限迴圈
+        const isRemoteUpdate = ref(false);
         const isLoading = ref(true);
         const currentUser = ref(null);
         const isLocked = ref(false); // Global Lock Status
@@ -545,6 +547,9 @@ createApp({
         const showLocationModal = ref(false);
         const isEditingLocation = ref(false);
         const editingLocationId = ref(null);
+
+        // 修正: 定義旅遊開始日期
+        const TRIP_START_DATE = new Date('2025-12-30T00:00:00+09:00');
 
         // Helper: Get Japan Date Object (Fix for Timezone)
         // 使用原生 JS 強制轉換時區，無需引入額外 Library
@@ -651,38 +656,72 @@ createApp({
                 let loadCheck = 0;
                 const checkLoad = () => { loadCheck++; if(loadCheck >= 2) isLoading.value = false; };
                 
-                onValue(dbRef(db, 'traffic'), (s) => { trafficList.value = s.val() || []; checkLoad(); });
-                onValue(dbRef(db, 'expenses'), (s) => { expenses.value = s.val() || []; checkLoad(); });
-                onValue(dbRef(db, 'messages'), (s) => { messages.value = s.val() || []; nextTick(() => { if (msgContainer.value) msgContainer.value.scrollTop = msgContainer.value.scrollHeight; }); });
-                onValue(dbRef(db, 'locations'), (s) => { locations.value = s.val() || []; });
-                onValue(dbRef(db, 'shopping_list'), (s) => { shoppingList.value = s.val() || []; });
+                // 修正: 遠端更新時設置 Flag，並進行內容比對防止 Loop
+                const handleRemoteUpdate = (refValue, targetRef) => {
+                    const val = refValue || [];
+                    if (JSON.stringify(targetRef.value) !== JSON.stringify(val)) {
+                        isRemoteUpdate.value = true;
+                        targetRef.value = val;
+                        nextTick(() => { isRemoteUpdate.value = false; });
+                    }
+                };
+
+                onValue(dbRef(db, 'traffic'), (s) => { handleRemoteUpdate(s.val(), trafficList); checkLoad(); });
+                onValue(dbRef(db, 'expenses'), (s) => { handleRemoteUpdate(s.val(), expenses); checkLoad(); });
+                onValue(dbRef(db, 'messages'), (s) => { handleRemoteUpdate(s.val(), messages); nextTick(() => { if (msgContainer.value) msgContainer.value.scrollTop = msgContainer.value.scrollHeight; }); });
+                onValue(dbRef(db, 'locations'), (s) => { handleRemoteUpdate(s.val(), locations); });
+                onValue(dbRef(db, 'shopping_list'), (s) => { handleRemoteUpdate(s.val(), shoppingList); });
+                onValue(dbRef(db, 'public_expenses'), (s) => { handleRemoteUpdate(s.val(), publicExpenses); });
+                
                 onValue(dbRef(db, 'exchangeRate'), (s) => { if(s.val()) exchangeRate.value = parseFloat(s.val()); });
-                onValue(dbRef(db, 'public_expenses'), (s) => { publicExpenses.value = s.val() || []; });
                 onValue(dbRef(db, 'public_fund_total'), (s) => { if(s.val()) publicFundTotal.value = parseFloat(s.val()); });
                 // Listen for Global Lock
                 onValue(dbRef(db, 'global_settings/is_locked'), (s) => { isLocked.value = !!s.val(); });
             }
 
-            setTimeout(() => isLoading.value = false, 3000); // Fallback if offline
+            // 修正: 確保 Loading 不會卡死，設置 5 秒強制關閉
+            setTimeout(() => {
+                if (isLoading.value) {
+                    console.warn("Force clearing loading state");
+                    isLoading.value = false;
+                }
+            }, 5000); 
+
             fetchRealTimeExchangeRate();
             fetchWeather();
         });
 
         // Watch and Sync to LocalStorage (Offline Persistence)
-        watch(trafficList, (v) => { localStorage.setItem('traffic', JSON.stringify(v)); if(db) set(dbRef(db, 'traffic'), v); }, { deep: true });
-        watch(expenses, (v) => { localStorage.setItem('expenses', JSON.stringify(v)); if(db) set(dbRef(db, 'expenses'), v); }, { deep: true });
-        watch(messages, (v) => { localStorage.setItem('messages', JSON.stringify(v)); if(db) set(dbRef(db, 'messages'), v); }, { deep: true });
-        watch(locations, (v) => { localStorage.setItem('locations', JSON.stringify(v)); if(db) set(dbRef(db, 'locations'), v); }, { deep: true });
-        watch(shoppingList, (v) => { localStorage.setItem('shopping_list', JSON.stringify(v)); if(db) set(dbRef(db, 'shopping_list'), v); }, { deep: true });
+        // 修正: 加入 if (isRemoteUpdate.value) return; 防止寫入迴圈
+        const createWatcher = (source, storageKey, dbPath) => {
+            watch(source, (v) => {
+                if (isRemoteUpdate.value) return;
+                localStorage.setItem(storageKey, JSON.stringify(v));
+                if(db) set(dbRef(db, dbPath), v);
+            }, { deep: true });
+        };
+
+        createWatcher(trafficList, 'traffic', 'traffic');
+        createWatcher(expenses, 'expenses', 'expenses');
+        createWatcher(messages, 'messages', 'messages');
+        createWatcher(locations, 'locations', 'locations');
+        createWatcher(shoppingList, 'shopping_list', 'shopping_list');
+        createWatcher(publicExpenses, 'public_expenses', 'public_expenses');
+
         watch(exchangeRate, (v) => { localStorage.setItem('exchangeRate', v); if(db) set(dbRef(db, 'exchangeRate'), v); });
-        watch(publicExpenses, (v) => { localStorage.setItem('public_expenses', JSON.stringify(v)); if(db) set(dbRef(db, 'public_expenses'), v); }, { deep: true });
         watch(publicFundTotal, (v) => { localStorage.setItem('public_fund_total', v); });
 
         const filteredTraffic = computed(() => trafficList.value.filter(item => item.day === currentDay.value).sort((a, b) => a.time.localeCompare(b.time)));
         const totalExpense = computed(() => expenses.value.reduce((sum, item) => sum + item.amount, 0));
         const calculatedTWD = computed(() => !newExpense.value.inputAmount ? 0 : (currencyMode.value === 'JPY' ? Math.round(newExpense.value.inputAmount * exchangeRate.value) : Math.round(newExpense.value.inputAmount)));
         
-        const isToday = computed(() => true); 
+        // 修正: isToday 邏輯，計算當前日期是第幾天
+        const isToday = computed(() => {
+            const today = getJapanDateObj();
+            const diffTime = today - TRIP_START_DATE;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            return diffDays === currentDay.value;
+        }); 
         
         // Corrected for Japan Time (Timeline Position)
         const currentTimePercent = computed(() => {
@@ -754,6 +793,8 @@ createApp({
 
         const addExpense = async () => {
             if (!newExpense.value.description || !newExpense.value.inputAmount || !newExpense.value.payer) { showToast('Missing info', 'error'); return; }
+            // 修正: 負數檢查
+            if (newExpense.value.inputAmount <= 0) { showToast('金額錯誤', 'error'); return; }
             
             isLoading.value = true; // Show loading
             
@@ -791,7 +832,9 @@ createApp({
         // Updated Public Expense Logic (JPY/TWD) + Image
         const addPublicExpense = async () => {
             if(!newPublicExpense.value.name || !newPublicExpense.value.inputAmount) { showToast('Error', 'error'); return; }
-            
+            // 修正: 負數檢查
+            if (newPublicExpense.value.inputAmount <= 0) { showToast('金額錯誤', 'error'); return; }
+
             isLoading.value = true;
 
             try {
