@@ -1,3 +1,4 @@
+<start_of_user_uploaded_file: index.html>
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -46,6 +47,10 @@
         .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; } .fade-enter-from, .fade-leave-to { opacity: 0; }
         .toast-enter-active, .toast-leave-active { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); } .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(-20px) scale(0.95); }
         .timeline-line { background: linear-gradient(to bottom, #CDE5D2 0%, #CDE5D2 50%, transparent 100%); }
+        button:disabled { cursor: not-allowed; opacity: 0.7; }
+        /* Custom scrollbar for expense details */
+        .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background-color: #CDE5D2; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -114,11 +119,11 @@
                     </p>
                 </div>
                 <div class="flex items-center space-x-3">
-                     <!-- Lock Toggle (Global Sync) -->
+                     <!-- Lock Toggle -->
                     <button @click="toggleGlobalLock" :class="isLocked ? 'text-red-400 bg-red-50' : 'text-stone/40 bg-stone/5'" class="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 active:scale-95" aria-label="toggle lock">
                         <i :class="isLocked ? 'fa-solid fa-lock text-xs' : 'fa-solid fa-lock-open text-xs'"></i>
                     </button>
-                    <!-- User Profile / Logout -->
+                    <!-- User Profile -->
                     <button v-if="currentUser" @click="confirmLogout" class="w-9 h-9 rounded-full bg-clover-100 text-clover-600 flex items-center justify-center text-xs font-bold shadow-sm border border-clover-200 relative group" aria-label="profile">
                         {{ currentUser.substring(0,1) }}
                         <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-white rounded-full flex items-center justify-center shadow-sm"><i class="fa-solid fa-rotate text-[8px] text-stone"></i></div>
@@ -126,7 +131,7 @@
                 </div>
             </div>
 
-            <!-- Navigation with Chinese Labels -->
+            <!-- Navigation -->
             <div class="flex justify-between items-center px-1">
                 <nav class="flex space-x-2 mx-auto w-full justify-between max-w-[340px]">
                     <button v-for="tab in ['traffic', 'split', 'map', 'broadcast', 'info']" :key="tab" @click="currentTab = tab" :class="currentTab === tab ? 'text-clover-500' : 'text-stone/60 hover:text-stone'" class="flex flex-col items-center transition-all duration-500 group relative py-2 px-2 flex-1">
@@ -134,7 +139,6 @@
                             <i :class="{ 'traffic': 'fa-solid fa-train-subway', 'split': 'fa-solid fa-yen-sign', 'map': 'fa-regular fa-map', 'broadcast': 'fa-regular fa-comment-dots', 'info': 'fa-solid fa-basket-shopping' }[tab]" class="text-lg mb-2 transition-transform duration-300" :class="currentTab === tab ? '-translate-y-1' : ''"></i>
                             <span v-if="tab === 'broadcast' && messages.length > 0" class="absolute -top-1 -right-1 w-1.5 h-1.5 bg-camel-400 rounded-full border border-washi animate-pulse"></span>
                         </div>
-                        <!-- Translated Labels -->
                         <span class="text-[10px] font-bold tracking-widest opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-1">{{ tabNameMap[tab] }}</span>
                         <div v-if="currentTab === tab" class="absolute bottom-0 w-1 h-1 bg-clover-400 rounded-full"></div>
                     </button>
@@ -156,14 +160,13 @@
                     <div v-if="filteredTraffic.length === 0" class="flex flex-col items-center justify-center py-20 text-stone/30"><i class="fa-solid fa-leaf text-4xl mb-4 opacity-30 text-clover-300 animate-pulse"></i><p class="font-light text-xs tracking-[0.2em]">NO SCHEDULE</p></div>
                     <div v-if="filteredTraffic.length > 0" class="absolute top-6 bottom-12 left-[4.5rem] w-[1px] timeline-line z-0"></div>
                     
-                    <!-- 修正: isToday 邏輯已更新，只會在正確的日期顯示紅線 -->
                     <div v-if="isToday" class="absolute left-[4.5rem] w-full z-0 pointer-events-none" :style="{ top: currentTimePercent + '%' }">
                          <div class="w-3 h-3 bg-red-400 rounded-full absolute -left-1.5 -top-1.5 ring-4 ring-red-400/20"></div>
                          <div class="h-[1px] bg-red-400/50 w-full border-t border-dashed border-red-400"></div>
                     </div>
 
                     <div v-for="item in filteredTraffic" :key="item.id" class="relative z-10 mb-6 last:mb-0 group">
-                        <div class="flex items-start">
+                         <div class="flex items-start">
                             <div class="w-[4.5rem] flex flex-col items-center pt-2 mr-4 flex-shrink-0 bg-washi z-10">
                                 <span class="text-sm font-bold text-clover-600 tracking-wide font-mono">{{ item.time }}</span>
                                 <span v-if="item.endTime" class="text-[10px] text-stone/60 font-mono mt-1">{{ item.endTime }}</span>
@@ -194,7 +197,7 @@
                 <button v-if="!isLocked" @click="openTrafficModal" class="fixed bottom-24 right-6 w-14 h-14 bg-clover-300 text-white rounded-full shadow-lg shadow-clover-200 flex items-center justify-center hover:scale-105 hover:bg-clover-400 transition duration-300 z-20"><i class="fa-solid fa-plus text-xl"></i></button>
             </div>
 
-            <!-- Split -->
+            <!-- Split (Modified Section) -->
             <div v-if="currentTab === 'split'" class="animate-fade-in-up space-y-6 pt-2">
                 <div class="flex justify-between items-center px-2">
                     <div class="text-[10px] text-stone tracking-widest font-bold uppercase">匯率 (Exchange Rate)</div>
@@ -234,17 +237,43 @@
                             </div>
                             <div class="flex items-center justify-center px-4 bg-clover-50/50 rounded-2xl min-w-[90px]"><div class="text-right"><div class="text-[9px] text-stone uppercase tracking-wide">NT$</div><div class="text-xs text-sumi font-bold">{{ calculatedTWD.toLocaleString() }}</div></div></div>
                         </div>
+                        
                         <div class="pt-2">
-                            <label class="text-[10px] text-stone tracking-widest uppercase block mb-3 ml-1">付款人</label>
+                            <label class="text-[10px] text-stone tracking-widest uppercase block mb-3 ml-1">付款人 (Payer)</label>
                             <div class="grid grid-cols-4 gap-2">
                                 <button v-for="member in members" :key="member" @click="newExpense.payer = member" :class="newExpense.payer === member ? 'bg-clover-300 text-white shadow-md' : 'bg-clover-50/50 text-stone hover:bg-clover-50'" class="py-2.5 rounded-xl text-xs transition-all duration-300 truncate font-medium">{{ member }}</button>
                             </div>
                         </div>
+
+                        <!-- MODIFIED: Advanced Split Beneficiaries -->
+                        <div class="pt-2">
+                            <div class="flex justify-between items-center mb-3 ml-1">
+                                <label class="text-[10px] text-stone tracking-widest uppercase">分攤對象 ({{ newExpense.beneficiaries.length }})</label>
+                                <button @click="toggleAllBeneficiaries" class="text-[10px] text-clover-500 font-bold bg-clover-50 px-2 py-1 rounded-md hover:bg-clover-100 transition">
+                                    {{ newExpense.beneficiaries.length === members.length ? '取消全選' : '全選' }}
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-4 gap-2">
+                                <button v-for="member in members" :key="'ben-'+member" @click="toggleBeneficiary(member)" 
+                                    :class="newExpense.beneficiaries.includes(member) ? 'bg-camel-300 text-white shadow-md' : 'bg-stone/5 text-stone/50 hover:bg-stone/10'" 
+                                    class="py-2.5 rounded-xl text-xs transition-all duration-300 truncate font-medium relative">
+                                    {{ member }}
+                                    <i v-if="newExpense.beneficiaries.includes(member)" class="fa-solid fa-check absolute top-1 right-1 text-[8px] opacity-60"></i>
+                                </button>
+                            </div>
+                            <div v-if="newExpense.beneficiaries.length > 0 && calculatedTWD > 0" class="text-right mt-2">
+                                <span class="text-[10px] text-stone/60">每人約負擔 <span class="font-mono font-bold text-sumi">NT$ {{ Math.round(calculatedTWD / newExpense.beneficiaries.length).toLocaleString() }}</span></span>
+                            </div>
+                        </div>
+
                         <div class="mt-4 pt-4 border-t border-dashed border-stone/10 flex items-center space-x-3">
                             <div v-if="newExpense.image" class="relative w-16 h-16 rounded-xl overflow-hidden group shadow-sm"><img :src="newExpense.image" class="w-full h-full object-cover"><button @click="newExpense.image = ''" class="absolute inset-0 bg-black/40 text-white flex items-center justify-center"><i class="fa-solid fa-times"></i></button></div>
                             <label class="flex-1 h-12 rounded-xl border-2 border-dashed border-clover-200 hover:border-clover-400 bg-clover-50/50 flex items-center justify-center text-clover-400 cursor-pointer text-xs font-bold gap-2 active:bg-clover-100 transition"><i class="fa-solid fa-camera"></i> RECEIPT<input type="file" accept="image/*" class="hidden" @change="handleExpenseImage"></label>
                         </div>
-                        <button @click="addExpense" class="w-full mt-2 bg-stone/5 text-sumi py-4 rounded-2xl text-sm font-medium hover:bg-clover-300 hover:text-white transition duration-300 flex items-center justify-center"><i class="fa-solid fa-plus mr-2"></i> 新增一筆</button>
+                        <button @click="addExpense" :disabled="isSubmitting" class="w-full mt-2 bg-stone/5 text-sumi py-4 rounded-2xl text-sm font-medium hover:bg-clover-300 hover:text-white transition duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span v-if="isSubmitting"><i class="fa-solid fa-spinner fa-spin mr-2"></i> 處理中...</span>
+                            <span v-else><i class="fa-solid fa-plus mr-2"></i> 新增一筆</span>
+                        </button>
                     </div>
                 </div>
 
@@ -256,23 +285,55 @@
                     <div v-if="selectedPayerForDetail" class="bg-clover-50/30 rounded-2xl p-4">
                         <div v-if="payerExpenses.length === 0" class="text-center text-stone/40 text-xs py-8">No records found</div>
                         <div class="space-y-3 max-h-60 overflow-y-auto pr-2 scrollbar-thin">
-                            <div v-for="(exp, index) in payerExpenses" :key="index" class="flex justify-between items-center text-sm group">
-                                <div class="flex-1 min-w-0 mr-4"><div class="text-sumi truncate text-xs font-medium">{{ exp.description }}</div><div class="text-[9px] text-stone mt-0.5">{{ exp.date }}</div></div>
-                                <div class="flex items-center"><span class="font-mono text-clover-600 text-xs mr-2">NT$ {{ Math.round(exp.amount).toLocaleString() }}</span><button v-if="exp.image" @click.stop="openImageModal(exp.image)" class="text-stone/40 hover:text-clover-500"><i class="fa-regular fa-image"></i></button></div>
+                            <div v-for="(exp, index) in payerExpenses" :key="index" class="flex justify-between items-start text-sm group pb-2 border-b border-white/50 last:border-0">
+                                <div class="flex-1 min-w-0 mr-4">
+                                    <div class="text-sumi truncate text-xs font-medium">{{ exp.description }}</div>
+                                    <div class="text-[9px] text-stone mt-0.5">{{ exp.date }}</div>
+                                    
+                                    <!-- IMPROVED: Visualizing Beneficiaries -->
+                                    <div class="mt-1">
+                                        <div v-if="isAllBeneficiaries(exp)" class="inline-flex items-center bg-stone-100 text-stone/50 px-1.5 py-0.5 rounded text-[8px] font-medium tracking-wide">
+                                            <i class="fa-solid fa-users mr-1"></i>全員分攤 (All)
+                                        </div>
+                                        <div v-else class="flex flex-wrap gap-1">
+                                            <span class="text-[8px] text-stone/40 mr-1 self-center">For:</span>
+                                            <span v-for="b in exp.beneficiaries" :key="b" class="bg-white border border-clover-100 text-clover-600 px-1.5 py-0.5 rounded text-[8px] font-medium shadow-sm">
+                                                {{ b }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-end">
+                                    <span class="font-mono text-clover-600 text-xs font-bold">NT$ {{ Math.round(exp.amount).toLocaleString() }}</span>
+                                    <button v-if="exp.image" @click.stop="openImageModal(exp.image)" class="text-stone/40 hover:text-clover-500 mt-1"><i class="fa-regular fa-image"></i></button>
+                                </div>
                             </div>
                         </div>
-                        <div class="mt-4 pt-4 border-t border-dashed border-stone/20 flex justify-between items-center"><span class="text-[10px] text-stone font-bold tracking-widest uppercase">Total</span><span class="text-lg font-medium text-sumi font-mono">NT$ {{ Math.round(payerTotal).toLocaleString() }}</span></div>
+                        <div class="mt-4 pt-4 border-t border-dashed border-stone/20 flex justify-between items-center"><span class="text-[10px] text-stone font-bold tracking-widest uppercase">Total Paid</span><span class="text-lg font-medium text-sumi font-mono">NT$ {{ Math.round(payerTotal).toLocaleString() }}</span></div>
                     </div>
                     <div class="mt-4 text-center"><button @click="exportToCSV" class="text-xs text-stone/50 hover:text-clover-600 underline tracking-wider"><i class="fa-solid fa-file-csv mr-1.5"></i>匯出 CSV</button></div>
                 </div>
-                
-                 <div class="space-y-3">
+
+                <div class="space-y-3">
                     <h3 class="text-[10px] text-stone tracking-widest uppercase pl-4 mb-1">近期支出</h3>
-                    <div v-for="(exp, index) in expenses.slice().reverse().slice(0, 5)" :key="index" class="bg-white px-5 py-4 rounded-2xl flex justify-between items-center group border border-transparent hover:border-clover-50 shadow-sm">
-                        <div class="flex items-center space-x-4 overflow-hidden"><div class="w-9 h-9 rounded-full bg-clover-50 text-clover-500 flex items-center justify-center text-xs font-bold">{{ exp.payer.substring(0,1) }}</div><div class="min-w-0"><p class="text-sumi text-sm truncate font-medium">{{ exp.description }}</p><p class="text-[10px] text-stone mt-0.5">{{ exp.date }}</p></div></div>
-                        <div class="flex flex-col items-end">
+                    <div v-for="(exp, index) in expenses.slice().reverse().slice(0, 5)" :key="index" class="bg-white px-5 py-4 rounded-2xl flex justify-between items-start group border border-transparent hover:border-clover-50 shadow-sm transition-all">
+                        <div class="flex items-start space-x-4 overflow-hidden flex-1">
+                            <div class="w-9 h-9 rounded-full bg-clover-50 text-clover-500 flex-shrink-0 flex items-center justify-center text-xs font-bold mt-1">{{ exp.payer.substring(0,1) }}</div>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-sumi text-sm truncate font-medium leading-tight">{{ exp.description }}</p>
+                                <p class="text-[10px] text-stone mt-0.5 mb-1.5">{{ exp.date }}</p>
+                                
+                                <!-- IMPROVED: Visualizing Beneficiaries in Recent List -->
+                                <div v-if="!isAllBeneficiaries(exp)" class="flex flex-wrap gap-1">
+                                    <span v-for="b in exp.beneficiaries" :key="b" class="bg-camel-50 text-camel-500 px-1.5 py-[2px] rounded text-[8px] font-bold tracking-wide">
+                                        {{ b.substring(0,1) }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end pl-2">
                             <div class="flex items-center space-x-2"><div class="text-sm font-bold text-sumi font-mono">NT$ {{ Math.round(exp.amount).toLocaleString() }}</div><button v-if="exp.image" @click.stop="openImageModal(exp.image)" class="text-stone/30 hover:text-clover-500 text-xs"><i class="fa-regular fa-image"></i></button></div>
-                            <button v-if="!isLocked" @click="askDelete('expense', expenses.length - 1 - index)" class="text-xs text-stone hover:text-red-400 mt-1"><i class="fa-solid fa-trash-can"></i></button>
+                            <button v-if="!isLocked" @click="askDelete('expense', expenses.length - 1 - index)" class="text-xs text-stone hover:text-red-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
                     </div>
                 </div>
@@ -284,7 +345,7 @@
                         <div class="flex justify-between items-end mb-1"><span class="text-[10px] text-stone font-bold tracking-widest uppercase">餘額 (Balance)</span><div class="text-right"><span class="text-xs text-stone mr-1">NT$</span><span class="text-2xl font-light text-clover-600 font-mono">{{ Math.round(remainingPublicFund).toLocaleString() }}</span></div></div>
                         <div class="w-full h-1.5 bg-white rounded-full overflow-hidden shadow-inner mb-4"><div class="h-full bg-clover-400 rounded-full transition-all duration-1000 ease-out relative" :style="{ width: publicFundPercentage + '%' }"></div></div>
                         
-                        <!-- Set Total (Modified with Currency Toggle) -->
+                        <!-- Set Total -->
                         <div v-if="!isLocked" class="pt-4 border-t border-dashed border-stone/10">
                             <div class="flex justify-between items-center mb-2">
                                 <label class="text-[9px] text-stone tracking-widest uppercase"><i class="fa-solid fa-gear mr-1"></i>設定總額</label>
@@ -298,7 +359,7 @@
                         </div>
                     </div>
                     
-                    <!-- Add Public Expense (Modified with Currency Toggle & Image Upload) -->
+                    <!-- Add Public Expense -->
                     <div v-if="!isLocked" class="mb-6">
                         <div class="flex justify-between items-center mb-3 border-l-2 border-camel-300 pl-2">
                             <h4 class="text-[10px] text-stone tracking-widest uppercase font-bold">新增公費支出</h4>
@@ -311,9 +372,11 @@
                                     <span class="absolute left-3 top-3 text-stone/50 text-[10px] font-bold">{{ newPublicExpense.currency === 'JPY' ? '¥' : '$' }}</span>
                                     <input v-model.number="newPublicExpense.inputAmount" type="number" placeholder="金額..." class="w-full bg-stone/5 border-none rounded-2xl pl-7 pr-4 py-3 text-sm font-mono">
                                 </div>
-                                <button @click="addPublicExpense" class="bg-camel-400 text-white w-12 h-[44px] rounded-2xl flex items-center justify-center shadow-md"><i class="fa-solid fa-plus"></i></button>
+                                <button @click="addPublicExpense" :disabled="isSubmitting" class="bg-camel-400 text-white w-12 h-[44px] rounded-2xl flex items-center justify-center shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <i v-if="isSubmitting" class="fa-solid fa-spinner fa-spin"></i>
+                                    <i v-else class="fa-solid fa-plus"></i>
+                                </button>
                             </div>
-                            <!-- Added Image Upload for Public Wallet -->
                             <div class="flex items-center space-x-2 pt-1">
                                 <div v-if="newPublicExpense.image" class="relative w-10 h-10 rounded-lg overflow-hidden group shadow-sm"><img :src="newPublicExpense.image" class="w-full h-full object-cover"><button @click="newPublicExpense.image = ''" class="absolute inset-0 bg-black/40 text-white flex items-center justify-center"><i class="fa-solid fa-times text-xs"></i></button></div>
                                 <label class="flex-1 h-10 rounded-xl border border-dashed border-stone/30 hover:border-camel-400 bg-stone/5 flex items-center justify-center text-stone/50 hover:text-camel-400 cursor-pointer text-[10px] font-bold gap-2 transition"><i class="fa-solid fa-camera"></i> ADD RECEIPT<input type="file" accept="image/*" class="hidden" @change="handlePublicImage"></label>
@@ -324,14 +387,13 @@
                     <div>
                         <h4 class="text-[10px] text-stone tracking-widest uppercase font-bold mb-3 pl-2 border-l-2 border-stone/30">明細 ({{ publicExpenses.length }})</h4>
                         <div v-for="item in publicExpenses.slice().reverse()" :key="item.id" class="flex justify-between items-center p-3.5 bg-stone/5 rounded-2xl mb-2"><div class="flex-1 min-w-0 mr-3"><div class="text-sm font-medium text-sumi truncate">{{ item.name }}</div><div class="text-[9px] text-stone mt-1">{{ item.date }}</div></div><div class="flex items-center space-x-3"><span class="font-mono text-sm font-bold text-sumi">NT$ {{ Math.round(item.amount).toLocaleString() }}</span>
-                            <!-- View Image Button -->
                             <button v-if="item.image" @click.stop="openImageModal(item.image)" class="text-stone/40 hover:text-clover-500"><i class="fa-regular fa-image"></i></button>
                             <button v-if="!isLocked" @click="askDelete('publicExpense', item.id)" class="text-stone/40 hover:text-red-400"><i class="fa-solid fa-trash-can text-[10px]"></i></button></div></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Map -->
+            <!-- Map, Broadcast, Info sections remain unchanged -->
             <div v-if="currentTab === 'map'" class="animate-fade-in-up space-y-6 pt-2">
                 <div>
                     <h3 class="text-[10px] text-stone tracking-widest uppercase font-bold mb-3 px-2">常用位置</h3>
@@ -357,7 +419,6 @@
                 </div>
             </div>
 
-            <!-- Broadcast -->
             <div v-if="currentTab === 'broadcast'" class="h-full flex flex-col pb-4 animate-fade-in-up">
                 <div class="flex-1 overflow-y-auto space-y-6 pb-4 pt-2 px-2" ref="msgContainer">
                     <div v-if="messages.length === 0" class="text-center py-32 opacity-30"><i class="fa-regular fa-comments text-4xl mb-4 text-stone"></i><p class="text-xs text-stone tracking-widest">START CONVERSATION</p></div>
@@ -379,7 +440,6 @@
                 </div>
             </div>
 
-            <!-- Info (Shopping) -->
             <div v-if="currentTab === 'info'" class="animate-fade-in-up pt-2">
                 <div class="px-2 mb-4">
                     <h2 class="text-[10px] tracking-widest font-bold uppercase text-stone mb-4 pl-4 border-l-2 border-clover-300 flex justify-between items-center">
@@ -396,14 +456,12 @@
                             
                             <div class="absolute top-4 right-4 z-10 flex space-x-2">
                                 <a v-if="item.link" :href="item.link" target="_blank" class="w-9 h-9 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-clover-500 shadow-sm border border-stone/5" @click.stop><i class="fa-solid fa-link text-sm"></i></a>
-                                <!-- Check Button -->
                                 <button @click="toggleBought(item)" class="w-9 h-9 backdrop-blur-md rounded-full flex items-center justify-center shadow-sm transition-colors border border-stone/5" :class="item.isBought ? 'bg-clover-500 text-white' : 'bg-white/90 text-stone/30 hover:text-clover-500'"><i class="fa-solid fa-check text-sm"></i></button>
                             </div>
 
                             <div class="relative w-full aspect-[4/3] mb-4 rounded-2xl overflow-hidden bg-clover-50/50 border border-stone/5">
                                 <img v-if="item.image" :src="item.image" class="w-full h-full object-cover">
                                 <div v-else class="w-full h-full flex items-center justify-center text-clover-200"><i class="fa-solid fa-image text-4xl"></i></div>
-                                <!-- Bought Overlay -->
                                 <div v-if="item.isBought" class="absolute inset-0 bg-stone-900/10 flex items-center justify-center backdrop-blur-[1px]"><span class="bg-white text-clover-600 px-4 py-1 rounded-full font-bold text-xs tracking-widest shadow-md">BOUGHT</span></div>
                             </div>
                             
@@ -423,7 +481,7 @@
 
         </main>
 
-        <!-- Modals -->
+        <!-- Modals (Traffic, Location, Shopping same as before) -->
         <div v-if="showTrafficModal" class="absolute inset-0 bg-sumi/20 backdrop-blur-[2px] z-50 flex items-end sm:items-center justify-center">
             <div class="bg-white w-full sm:w-[400px] sm:rounded-[32px] rounded-t-[32px] p-8 shadow-2xl animate-fade-in-up max-h-[90vh] overflow-y-auto">
                 <div class="flex justify-between items-center mb-8"><h3 class="text-lg font-bold text-sumi tracking-wide"><i class="fa-solid fa-pen-to-square text-clover-300 mr-2"></i> {{ isEditingTraffic ? 'Edit' : 'Add' }} Transport</h3><button @click="showTrafficModal = false" class="w-8 h-8 rounded-full bg-clover-50 text-stone hover:bg-stone/10 flex items-center justify-center"><i class="fa-solid fa-times"></i></button></div>
@@ -452,7 +510,10 @@
                     <div class="relative w-full aspect-video bg-clover-50 rounded-2xl overflow-hidden border-2 border-dashed border-clover-200 hover:border-clover-300 transition group cursor-pointer" @click="$refs.fileInput.click()"><input type="file" ref="fileInput" accept="image/*" class="hidden" @change="handleImageUpload"><img v-if="shoppingModalData.image" :src="shoppingModalData.image" class="w-full h-full object-cover"><div v-else class="absolute inset-0 flex flex-col items-center justify-center text-clover-300"><i class="fa-solid fa-camera text-2xl mb-2"></i><span class="text-[10px] font-bold tracking-widest">ADD PHOTO</span></div></div>
                     <input v-model="shoppingModalData.name" type="text" placeholder="Name" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"><input v-model="shoppingModalData.link" type="text" placeholder="Link" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"><textarea v-model="shoppingModalData.description" placeholder="Description" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm h-24 resize-none"></textarea>
                     <div><label class="text-[10px] font-bold text-stone tracking-widest block mb-2 pl-1">OWNER</label><div class="grid grid-cols-4 gap-2"><button v-for="member in members" :key="member" @click="shoppingModalData.owner = member" :class="shoppingModalData.owner === member ? 'bg-camel-300 text-white shadow-md' : 'bg-clover-50 text-stone hover:bg-clover-100'" class="py-2 rounded-xl text-[10px] font-medium transition-all truncate">{{ member }}</button></div></div>
-                    <button @click="saveShoppingItem" class="w-full py-3 rounded-2xl bg-clover-300 text-white font-medium shadow-lg mt-2">Save</button>
+                    <button @click="saveShoppingItem" :disabled="isSubmitting" class="w-full py-3 rounded-2xl bg-clover-300 text-white font-medium shadow-lg mt-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span v-if="isSubmitting"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Saving...</span>
+                        <span v-else>Save</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -484,7 +545,6 @@ try {
     window.firebaseStorage = storage;
 } catch (error) {
     console.error("Firebase Init Error:", error);
-    // Allow app to continue offline even if init fails (will use local storage)
     window.firebaseDb = null;
     window.firebaseStorage = null;
 }
@@ -495,14 +555,13 @@ const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
 
 createApp({
     setup() {
-        // 修正: 引入 isRemoteUpdate 旗標以防止無限迴圈
         const isRemoteUpdate = ref(false);
         const isLoading = ref(true);
+        const isSubmitting = ref(false); 
         const currentUser = ref(null);
-        const isLocked = ref(false); // Global Lock Status
+        const isLocked = ref(false); 
 
         const currentTab = ref('traffic');
-        // Chinese Translation Map for Tabs
         const tabNameMap = { 'traffic': '交通', 'split': '分帳', 'map': '地圖', 'broadcast': '留言', 'info': '資訊' };
         
         const currentDay = ref(1);
@@ -532,12 +591,15 @@ createApp({
         const publicExpenses = ref([]);
         const publicFundTotal = ref(0);
         const publicFundInput = ref('');
-        const publicFundCurrencyMode = ref('JPY'); // New toggle for fund setting
-        const newPublicExpense = ref({ name: '', inputAmount: '', currency: 'JPY', image: '' }); // Default currency
+        const publicFundCurrencyMode = ref('JPY'); 
+        const newPublicExpense = ref({ name: '', inputAmount: '', currency: 'JPY', image: '' }); 
         const currencyMode = ref('JPY'); 
         const weatherCity = ref('Nagoya');
         const weatherData = ref({});
-        const newExpense = ref({ description: '', inputAmount: '', payer: '', image: '' });
+        
+        // MODIFIED: Init beneficiaries with all members (Setup Point 1)
+        const newExpense = ref({ description: '', inputAmount: '', payer: '', image: '', beneficiaries: [...fixedMembers] });
+        
         const trafficModalData = ref({ time: '09:00', endTime: '', type: 'train', destination: '', description: '', url: '', ticketUrl: '' }); 
         const msgText = ref('');
         const msgUser = ref(fixedMembers[0]);
@@ -548,19 +610,14 @@ createApp({
         const isEditingLocation = ref(false);
         const editingLocationId = ref(null);
 
-        // 修正: 定義旅遊開始日期
         const TRIP_START_DATE = new Date('2025-12-30T00:00:00+09:00');
 
-        // Helper: Get Japan Date Object (Fix for Timezone)
-        // 使用原生 JS 強制轉換時區，無需引入額外 Library
         const getJapanDateObj = () => {
             const date = new Date();
-            // Create a date string in JST (Asia/Tokyo)
             const jstString = date.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
             return new Date(jstString);
         };
         
-        // Helper: Formatters for Japan Time
         const getJapanDateStr = () => getJapanDateObj().toLocaleDateString('zh-TW');
         const getJapanTimeStr = () => getJapanDateObj().toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
@@ -596,21 +653,14 @@ createApp({
             reader.readAsDataURL(file);
         };
 
-        // Helper: Upload Image to Firebase Storage
         const uploadImageToStorage = async (base64String, folderName) => {
             if (!base64String || !storage) return '';
-            // If it's already a URL (editing existing item), return it
             if (base64String.startsWith('http')) return base64String;
 
             try {
-                // Create unique filename: folder/timestamp.jpg
                 const fileName = `${folderName}/${Date.now()}.jpg`;
                 const imageRef = storageRef(storage, fileName);
-                
-                // Upload Base64 string (processImage outputs data_url)
                 await uploadString(imageRef, base64String, 'data_url');
-                
-                // Get Download URL
                 const downloadURL = await getDownloadURL(imageRef);
                 return downloadURL;
             } catch (error) {
@@ -630,13 +680,11 @@ createApp({
         
         const confirmLogout = () => { if(confirm("切換使用者?")) { currentUser.value = null; localStorage.removeItem('nagoya_user'); } };
         
-        // Global Lock Logic
         const toggleGlobalLock = () => {
             if(db) set(dbRef(db, 'global_settings/is_locked'), !isLocked.value);
         };
 
         onMounted(() => {
-            // 1. Load from LocalStorage FIRST (Offline Capability)
             try {
                 if(localStorage.getItem('traffic')) trafficList.value = JSON.parse(localStorage.getItem('traffic'));
                 if(localStorage.getItem('expenses')) expenses.value = JSON.parse(localStorage.getItem('expenses'));
@@ -651,12 +699,10 @@ createApp({
             const savedUser = localStorage.getItem('nagoya_user');
             if(savedUser && members.value.includes(savedUser)) setUser(savedUser);
             
-            // 2. Then connect to Firebase (Sync)
             if(db) {
                 let loadCheck = 0;
                 const checkLoad = () => { loadCheck++; if(loadCheck >= 2) isLoading.value = false; };
                 
-                // 修正: 遠端更新時設置 Flag，並進行內容比對防止 Loop
                 const handleRemoteUpdate = (refValue, targetRef) => {
                     const val = refValue || [];
                     if (JSON.stringify(targetRef.value) !== JSON.stringify(val)) {
@@ -675,11 +721,9 @@ createApp({
                 
                 onValue(dbRef(db, 'exchangeRate'), (s) => { if(s.val()) exchangeRate.value = parseFloat(s.val()); });
                 onValue(dbRef(db, 'public_fund_total'), (s) => { if(s.val()) publicFundTotal.value = parseFloat(s.val()); });
-                // Listen for Global Lock
                 onValue(dbRef(db, 'global_settings/is_locked'), (s) => { isLocked.value = !!s.val(); });
             }
 
-            // 修正: 確保 Loading 不會卡死，設置 5 秒強制關閉
             setTimeout(() => {
                 if (isLoading.value) {
                     console.warn("Force clearing loading state");
@@ -691,8 +735,6 @@ createApp({
             fetchWeather();
         });
 
-        // Watch and Sync to LocalStorage (Offline Persistence)
-        // 修正: 加入 if (isRemoteUpdate.value) return; 防止寫入迴圈
         const createWatcher = (source, storageKey, dbPath) => {
             watch(source, (v) => {
                 if (isRemoteUpdate.value) return;
@@ -715,20 +757,18 @@ createApp({
         const totalExpense = computed(() => expenses.value.reduce((sum, item) => sum + item.amount, 0));
         const calculatedTWD = computed(() => !newExpense.value.inputAmount ? 0 : (currencyMode.value === 'JPY' ? Math.round(newExpense.value.inputAmount * exchangeRate.value) : Math.round(newExpense.value.inputAmount)));
         
-        // 修正: isToday 邏輯，計算當前日期是第幾天
         const isToday = computed(() => {
-            const today = getJapanDateObj();
-            const diffTime = today - TRIP_START_DATE;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            const now = new Date(); 
+            const diffTime = now.getTime() - TRIP_START_DATE.getTime();
+            if(diffTime < 0) return false;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; 
             return diffDays === currentDay.value;
         }); 
         
-        // Corrected for Japan Time (Timeline Position)
         const currentTimePercent = computed(() => {
             const japanDate = getJapanDateObj();
             const h = japanDate.getHours();
             const m = japanDate.getMinutes();
-            // Assuming trip activity is roughly 6 AM to 12 PM (18 hours)
             const totalMinutes = 18 * 60;
             const currentMinutes = (h * 60 + m) - (6 * 60);
             const pct = (currentMinutes / totalMinutes) * 100;
@@ -737,20 +777,48 @@ createApp({
 
         const debts = computed(() => {
             if (members.value.length === 0) return [];
-            let paid = {}; members.value.forEach(m => paid[m] = 0);
-            expenses.value.forEach(e => { if (paid[e.payer] !== undefined) paid[e.payer] += e.amount; });
-            const perPerson = totalExpense.value / members.value.length;
-            let balance = members.value.map(m => ({ name: m, val: paid[m] - perPerson }));
-            let result = []; balance.sort((a, b) => a.val - b.val); 
-            let i = 0, j = balance.length - 1; 
+            
+            let balances = {};
+            members.value.forEach(m => balances[m] = 0);
+
+            expenses.value.forEach(e => {
+                const amount = e.amount;
+                const payer = e.payer;
+                // Compatibility for old data: if no beneficiaries, assume everyone
+                const targets = (e.beneficiaries && e.beneficiaries.length > 0) ? e.beneficiaries : members.value;
+                
+                if(balances[payer] !== undefined) balances[payer] += amount;
+
+                const splitAmount = amount / targets.length;
+                targets.forEach(t => {
+                    if(balances[t] !== undefined) balances[t] -= splitAmount;
+                });
+            });
+
+            let balanceList = members.value.map(m => ({ name: m, val: balances[m] }));
+            balanceList = balanceList.filter(b => Math.abs(b.val) > 1);
+            
+            let result = [];
+            balanceList.sort((a, b) => a.val - b.val); 
+
+            let i = 0; 
+            let j = balanceList.length - 1; 
+
             while (i < j) {
-                let debtor = balance[i], creditor = balance[j];
-                if (Math.abs(debtor.val) < 1) { i++; continue; }
-                if (Math.abs(creditor.val) < 1) { j--; continue; }
+                let debtor = balanceList[i];
+                let creditor = balanceList[j];
+
                 let amount = Math.min(Math.abs(debtor.val), creditor.val);
-                if (amount > 1) result.push({ from: debtor.name, to: creditor.name, amount: amount });
-                debtor.val += amount; creditor.val -= amount;
-                if (Math.abs(debtor.val) < 1) i++; if (creditor.val < 1) j--;
+                
+                if (amount > 1) {
+                    result.push({ from: debtor.name, to: creditor.name, amount: amount });
+                }
+
+                debtor.val += amount;
+                creditor.val -= amount;
+
+                if (Math.abs(debtor.val) < 1) i++;
+                if (creditor.val < 1) j--;
             }
             return result;
         });
@@ -776,7 +844,6 @@ createApp({
         };
 
         const handleExpenseImage = (event) => processImage(event.target.files[0], (d) => newExpense.value.image = d);
-        // Added: Handle Public Image
         const handlePublicImage = (event) => processImage(event.target.files[0], (d) => newPublicExpense.value.image = d);
         const handleImageUpload = (event) => processImage(event.target.files[0], (d) => shoppingModalData.value.image = d);
 
@@ -791,12 +858,23 @@ createApp({
         };
         const getTransportIcon = (t) => ({ 'plane': 'fa-solid fa-plane', 'train': 'fa-solid fa-train', 'bus': 'fa-solid fa-bus', 'taxi': 'fa-solid fa-taxi', 'walk': 'fa-solid fa-person-walking' }[t] || 'fa-solid fa-diamond-turn-right');
 
+        const toggleBeneficiary = (m) => {
+            const idx = newExpense.value.beneficiaries.indexOf(m);
+            if(idx > -1) newExpense.value.beneficiaries.splice(idx, 1);
+            else newExpense.value.beneficiaries.push(m);
+        };
+
+        const toggleAllBeneficiaries = () => {
+            if(newExpense.value.beneficiaries.length === members.value.length) newExpense.value.beneficiaries = [];
+            else newExpense.value.beneficiaries = [...members.value];
+        };
+
         const addExpense = async () => {
             if (!newExpense.value.description || !newExpense.value.inputAmount || !newExpense.value.payer) { showToast('Missing info', 'error'); return; }
-            // 修正: 負數檢查
             if (newExpense.value.inputAmount <= 0) { showToast('金額錯誤', 'error'); return; }
+            if (newExpense.value.beneficiaries.length === 0) { showToast('請選擇分攤對象', 'error'); return; }
             
-            isLoading.value = true; // Show loading
+            isSubmitting.value = true; 
             
             try {
                 let imageUrl = '';
@@ -804,24 +882,37 @@ createApp({
                      imageUrl = await uploadImageToStorage(newExpense.value.image, 'expenses');
                 }
 
-                // Use Japan Date
-                expenses.value.push({ description: newExpense.value.description, originalAmount: newExpense.value.inputAmount, originalCurrency: currencyMode.value, amount: calculatedTWD.value, payer: newExpense.value.payer, date: getJapanDateStr(), image: imageUrl || '' });
+                expenses.value.push({ 
+                    description: newExpense.value.description, 
+                    originalAmount: newExpense.value.inputAmount, 
+                    originalCurrency: currencyMode.value, 
+                    amount: calculatedTWD.value, 
+                    payer: newExpense.value.payer, 
+                    date: getJapanDateStr(), 
+                    image: imageUrl || '',
+                    beneficiaries: [...newExpense.value.beneficiaries] 
+                });
                 
-                newExpense.value = { description: '', inputAmount: '', payer: currentUser.value || newExpense.value.payer, image: '' }; 
+                // Reset form (keep payer, reset beneficiaries to all - Setup Point 1)
+                newExpense.value = { description: '', inputAmount: '', payer: currentUser.value || newExpense.value.payer, image: '', beneficiaries: [...members.value] }; 
                 showToast('Expense added');
             } catch(e) {
                 console.error(e);
                 showToast('Error', 'error');
             } finally {
-                isLoading.value = false; // Hide loading
+                isSubmitting.value = false;
             }
         };
         
-        // Updated Public Fund Logic (JPY/TWD)
+        // Helper to check if everyone is involved (Optimization Logic)
+        const isAllBeneficiaries = (exp) => {
+            if (!exp.beneficiaries || exp.beneficiaries.length === 0) return true; // Legacy data treated as all
+            return exp.beneficiaries.length === members.value.length;
+        };
+
         const updatePublicFund = () => { 
             if(!publicFundInput.value) return; 
             let amount = publicFundInput.value; 
-            // If user selected JPY, convert to TWD for storage
             if(publicFundCurrencyMode.value === 'JPY') amount = Math.round(amount * exchangeRate.value); 
             set(dbRef(db, 'public_fund_total'), amount); 
             publicFundTotal.value = amount; 
@@ -829,17 +920,14 @@ createApp({
             showToast('Updated (Saved as TWD)'); 
         };
         
-        // Updated Public Expense Logic (JPY/TWD) + Image
         const addPublicExpense = async () => {
             if(!newPublicExpense.value.name || !newPublicExpense.value.inputAmount) { showToast('Error', 'error'); return; }
-            // 修正: 負數檢查
             if (newPublicExpense.value.inputAmount <= 0) { showToast('金額錯誤', 'error'); return; }
 
-            isLoading.value = true;
+            isSubmitting.value = true;
 
             try {
                 let final = newPublicExpense.value.inputAmount; 
-                // If JPY, convert to TWD
                 if(newPublicExpense.value.currency === 'JPY') final = Math.round(final * exchangeRate.value);
                 
                 let imageUrl = '';
@@ -850,11 +938,11 @@ createApp({
                 publicExpenses.value.push({ 
                     id: Date.now(), 
                     name: newPublicExpense.value.name, 
-                    amount: parseFloat(final), // Store as TWD
+                    amount: parseFloat(final), 
                     originalAmount: newPublicExpense.value.inputAmount, 
                     originalCurrency: newPublicExpense.value.currency, 
-                    date: getJapanDateStr(), // Use Japan Date
-                    image: imageUrl || '' // Include Image URL
+                    date: getJapanDateStr(), 
+                    image: imageUrl || '' 
                 });
                 newPublicExpense.value = { name: '', inputAmount: '', currency: 'JPY', image: '' }; 
                 showToast('Added');
@@ -862,7 +950,7 @@ createApp({
                 console.error(e);
                 showToast('Error', 'error');
             } finally {
-                isLoading.value = false;
+                isSubmitting.value = false;
             }
         };
 
@@ -878,11 +966,10 @@ createApp({
         const saveShoppingItem = async () => { 
             if(!shoppingModalData.value.name) { showToast('Name required', 'error'); return; } 
             
-            isLoading.value = true;
+            isSubmitting.value = true;
 
             try {
                 let imageUrl = shoppingModalData.value.image;
-                // Only upload if it's base64 (starts with data:)
                 if (imageUrl && imageUrl.startsWith('data:')) {
                     imageUrl = await uploadImageToStorage(imageUrl, 'shopping');
                 }
@@ -901,7 +988,7 @@ createApp({
                 console.error(e);
                 showToast('Error', 'error');
             } finally {
-                isLoading.value = false;
+                isSubmitting.value = false;
             }
         };
 
@@ -910,19 +997,24 @@ createApp({
         const getWeatherIcon = (c) => { if (c === 0) return 'fa-solid fa-sun'; if (c <= 3) return 'fa-solid fa-cloud-sun'; if (c <= 48) return 'fa-solid fa-smog'; if (c <= 67) return 'fa-solid fa-cloud-rain'; if (c <= 77) return 'fa-regular fa-snowflake'; if (c > 80 && c < 85) return 'fa-solid fa-cloud-showers-heavy'; if (c >= 85) return 'fa-solid fa-snowflake'; return 'fa-solid fa-cloud'; };
 
         const exportToCSV = () => {
-            let csv = "data:text/csv;charset=utf-8,\uFEFFDate,Payer,Item,Amount(TWD)\n";
-            expenses.value.forEach(r => csv += `${r.date},${r.payer},"${r.description}",${r.amount}\n`);
+            let csv = "data:text/csv;charset=utf-8,\uFEFFDate,Payer,Item,Amount(TWD),For\n";
+            expenses.value.forEach(r => {
+                const ben = (r.beneficiaries && r.beneficiaries.length < members.value.length) ? r.beneficiaries.join('/') : 'All';
+                csv += `${r.date},${r.payer},"${r.description}",${r.amount},"${ben}"\n`;
+            });
             const link = document.createElement("a"); link.setAttribute("href", encodeURI(csv)); link.setAttribute("download", "expenses.csv");
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         };
 
         return {
-            isLoading, currentUser, setUser, isLocked, confirmLogout, toggleGlobalLock,
+            isLoading, isSubmitting, currentUser, setUser, isLocked, confirmLogout, toggleGlobalLock,
             currentTab, tabNameMap, currentDay, days, members, expenses, newExpense, totalExpense, debts, addExpense, messages, msgText, msgUser, sendMessage, msgContainer, askDelete, confirmModal, confirmAction, exchangeRate, currencyMode, calculatedTWD, trafficList, filteredTraffic, showTrafficModal, trafficModalData, openTrafficModal, saveTraffic, editTraffic, copyTraffic, getTransportIcon, isEditingTraffic, toast, selectedPayerForDetail, payerExpenses, payerTotal, locations, showLocationModal, locationModalData, openLocationModal, editLocation, saveLocation, isEditingLocation, shoppingList, showShoppingModal, shoppingModalData, openShoppingModal, editShopping, saveShoppingItem, isEditingShopping, handleImageUpload, currentShoppingMember, toggleShoppingMember, filteredShoppingList, sortedShoppingList, toggleBought, weatherCity, weatherData, fetchWeather, getWeatherDay, getWeatherIcon, publicExpenses, publicFundTotal, publicFundInput, publicFundCurrencyMode, newPublicExpense, updatePublicFund, addPublicExpense, totalPublicSpent, remainingPublicFund, publicFundPercentage, handlePublicImage, handleExpenseImage, showImageModal, viewImageSrc, openImageModal, exportToCSV,
-            isToday, currentTimePercent
+            isToday, currentTimePercent,
+            toggleBeneficiary, toggleAllBeneficiaries, isAllBeneficiaries
         };
     }
 }).mount('#app');
 </script>
 </body>
 </html>
+<end_of_user_uploaded_file: index.html>
