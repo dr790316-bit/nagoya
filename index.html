@@ -50,7 +50,7 @@
         .scrollbar-thin::-webkit-scrollbar { width: 4px; }
         .scrollbar-thin::-webkit-scrollbar-thumb { background-color: #CDE5D2; border-radius: 4px; }
         .progress-bar { transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
-        /* Lock body scroll when modal is open */
+        /* Lock body scroll when modal is open to prevent background scrolling */
         body.modal-open { overflow: hidden; }
     </style>
 </head>
@@ -91,14 +91,14 @@
 
         <!-- Image Preview Modal -->
         <div v-if="showImageModal" class="fixed inset-0 z-[200] bg-sumi/95 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer" @click="showImageModal = false">
-            <div class="relative max-w-full max-h-full">
+            <div class="relative max-w-full max-h-full flex items-center justify-center">
                 <img :src="viewImageSrc" class="max-w-full max-h-[85vh] rounded-2xl shadow-2xl animate-bounce-in object-contain bg-white" @click.stop alt="preview image">
                 <button class="absolute -top-12 right-0 text-white/80 hover:text-white text-3xl transition" @click="showImageModal = false"><i class="fa-solid fa-circle-xmark"></i></button>
             </div>
         </div>
 
-        <!-- Confirm Dialog -->
-        <div v-if="confirmModal.show" class="absolute inset-0 bg-sumi/20 backdrop-blur-[2px] z-[210] flex items-center justify-center p-8">
+        <!-- Confirm Dialog (Fixed Center) -->
+        <div v-if="confirmModal.show" class="fixed inset-0 bg-sumi/20 backdrop-blur-[2px] z-[210] flex items-center justify-center p-8">
             <div class="bg-white w-full max-w-xs rounded-[32px] p-8 shadow-clover animate-bounce-in text-center border border-clover-50">
                 <h3 class="text-lg font-bold text-sumi mb-2 tracking-wide">{{ confirmModal.title }}</h3>
                 <p class="text-sm text-stone mb-8 leading-relaxed">{{ confirmModal.message }}</p>
@@ -109,9 +109,9 @@
             </div>
         </div>
 
-        <!-- Expense Action Modal (Edit/Delete) -->
-        <div v-if="expenseActionModal.show" class="absolute inset-0 bg-sumi/30 backdrop-blur-sm z-[220] flex items-end sm:items-center justify-center">
-            <div class="bg-white w-full sm:max-w-xs rounded-t-[32px] sm:rounded-[32px] p-6 shadow-2xl animate-fade-in-up">
+        <!-- Expense Action Modal (Edit/Delete) (Fixed Center) -->
+        <div v-if="expenseActionModal.show" class="fixed inset-0 bg-sumi/30 backdrop-blur-sm z-[220] flex items-center justify-center p-4">
+            <div class="bg-white w-full sm:max-w-xs rounded-[32px] p-6 shadow-2xl animate-fade-in-up max-h-[90dvh] overflow-y-auto">
                 <div class="flex items-start space-x-4 mb-6">
                     <div class="w-12 h-12 rounded-full bg-clover-100 flex items-center justify-center text-clover-600 text-lg shadow-sm">
                         <i :class="getCategoryIcon(expenseActionModal.item.category)"></i>
@@ -568,8 +568,9 @@
 
         </main>
 
-        <div v-if="showPersonalExpenseModal" class="absolute inset-0 bg-sumi/30 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center">
-            <div class="bg-white w-full sm:max-w-xs rounded-t-[32px] sm:rounded-[32px] p-6 shadow-2xl animate-fade-in-up">
+        <!-- Personal Expense Modal (Fixed Center) -->
+        <div v-if="showPersonalExpenseModal" class="fixed inset-0 bg-sumi/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white w-full sm:max-w-xs rounded-[32px] p-6 shadow-2xl animate-fade-in-up max-h-[90dvh] overflow-y-auto">
                 <div class="flex justify-between items-center mb-5">
                     <h3 class="font-medium text-sumi tracking-wide">新增<span class="text-stone-500">個人</span>支出</h3>
                     <button @click="showPersonalExpenseModal = false" class="text-stone/40 hover:text-stone"><i class="fa-solid fa-times text-xl"></i></button>
@@ -597,8 +598,9 @@
             </div>
         </div>
 
-        <div v-if="showSettleModal" class="absolute inset-0 bg-sumi/30 backdrop-blur-sm z-[220] flex items-end sm:items-center justify-center">
-            <div class="bg-white w-full sm:max-w-xs rounded-t-[32px] sm:rounded-[32px] p-6 shadow-2xl animate-fade-in-up">
+        <!-- Settle Modal (Fixed Center) -->
+        <div v-if="showSettleModal" class="fixed inset-0 bg-sumi/30 backdrop-blur-sm z-[220] flex items-center justify-center p-4">
+            <div class="bg-white w-full sm:max-w-xs rounded-[32px] p-6 shadow-2xl animate-fade-in-up max-h-[90dvh] overflow-y-auto">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="font-bold text-lg text-sumi tracking-wide">
                         {{ settleData.type === 'pay' ? '付款' : '收款' }}
@@ -623,8 +625,9 @@
             </div>
         </div>
 
-        <div v-if="showHistoryModal" class="absolute inset-0 bg-sumi/30 backdrop-blur-sm z-[220] flex items-end sm:items-center justify-center">
-            <div class="bg-white w-full sm:max-w-xs rounded-t-[32px] sm:rounded-[32px] p-6 shadow-2xl animate-fade-in-up flex flex-col max-h-[80vh]">
+        <!-- History Modal (Fixed Center) -->
+        <div v-if="showHistoryModal" class="fixed inset-0 bg-sumi/30 backdrop-blur-sm z-[220] flex items-center justify-center p-4">
+            <div class="bg-white w-full sm:max-w-xs rounded-[32px] p-6 shadow-2xl animate-fade-in-up flex flex-col max-h-[85dvh]">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="font-bold text-lg text-sumi tracking-wide">交易紀錄</h3>
                     <button @click="showHistoryModal = false" class="text-stone/40 hover:text-stone"><i class="fa-solid fa-times text-xl"></i></button>
@@ -654,8 +657,9 @@
             </div>
         </div>
 
-        <div v-if="showTrafficModal" class="absolute inset-0 bg-sumi/20 backdrop-blur-[2px] z-50 flex items-end sm:items-center justify-center">
-            <div class="bg-white w-full sm:w-[400px] sm:rounded-[32px] rounded-t-[32px] p-8 shadow-2xl animate-fade-in-up max-h-[90vh] overflow-y-auto">
+        <!-- Traffic Modal (Fixed Center) -->
+        <div v-if="showTrafficModal" class="fixed inset-0 bg-sumi/20 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
+            <div class="bg-white w-full sm:w-[400px] rounded-[32px] p-8 shadow-2xl animate-fade-in-up max-h-[90dvh] overflow-y-auto">
                 <div class="flex justify-between items-center mb-8"><h3 class="text-lg font-bold text-sumi tracking-wide"><i class="fa-solid fa-pen-to-square text-clover-300 mr-2"></i> {{ isEditingTraffic ? 'Edit' : 'Add' }} Transport</h3><button @click="showTrafficModal = false" class="w-8 h-8 rounded-full bg-clover-50 text-stone hover:bg-stone/10 flex items-center justify-center"><i class="fa-solid fa-times"></i></button></div>
                 <div class="space-y-5">
                     <div class="grid grid-cols-5 gap-2"><button v-for="t in ['plane', 'train', 'bus', 'taxi', 'walk']" :key="t" @click="trafficModalData.type = t" :class="trafficModalData.type === t ? 'bg-clover-300 text-white shadow-md' : 'bg-clover-50 text-stone'" class="p-3 rounded-2xl flex justify-center items-center aspect-square"><i :class="getTransportIcon(t)" class="text-lg"></i></button></div>
@@ -668,17 +672,19 @@
             </div>
         </div>
         
-        <div v-if="showLocationModal" class="absolute inset-0 bg-sumi/20 backdrop-blur-[2px] z-50 flex items-end sm:items-center justify-center p-6">
-             <div class="bg-white w-full max-w-xs rounded-[32px] p-8 shadow-2xl animate-fade-in-up">
+        <!-- Location Modal (Fixed Center) -->
+        <div v-if="showLocationModal" class="fixed inset-0 bg-sumi/20 backdrop-blur-[2px] z-50 flex items-center justify-center p-6">
+             <div class="bg-white w-full max-w-xs rounded-[32px] p-8 shadow-2xl animate-fade-in-up max-h-[90dvh] overflow-y-auto">
                  <div class="flex justify-between items-center mb-6"><h3 class="text-lg font-bold text-sumi tracking-wide">Location</h3><button @click="showLocationModal = false" class="w-8 h-8 rounded-full bg-clover-50 text-stone hover:bg-stone/10 flex items-center justify-center"><i class="fa-solid fa-times"></i></button></div>
                 <div class="space-y-4"><input v-model="locationModalData.name" type="text" placeholder="Name" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"><input v-model="locationModalData.description" type="text" placeholder="Description" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"><input v-model="locationModalData.url" type="text" placeholder="Google Maps URL" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"><button @click="saveLocation" class="w-full py-3 rounded-2xl bg-clover-300 text-white font-medium shadow-lg mt-2">Save</button></div>
             </div>
         </div>
 
-        <div v-if="showShoppingModal" class="absolute inset-0 bg-sumi/20 backdrop-blur-[2px] z-50 flex items-end sm:items-center justify-center p-6">
-            <div class="bg-white w-full max-w-xs rounded-[32px] p-8 shadow-2xl animate-fade-in-up">
+        <!-- Shopping Modal (Fixed Center) -->
+        <div v-if="showShoppingModal" class="fixed inset-0 bg-sumi/20 backdrop-blur-[2px] z-50 flex items-center justify-center p-6">
+            <div class="bg-white w-full max-w-xs rounded-[32px] p-8 shadow-2xl animate-fade-in-up max-h-[90dvh] overflow-y-auto">
                  <div class="flex justify-between items-center mb-6"><h3 class="text-lg font-bold text-sumi tracking-wide">Item</h3><button @click="showShoppingModal = false" class="w-8 h-8 rounded-full bg-clover-50 text-stone hover:bg-stone/10 flex items-center justify-center"><i class="fa-solid fa-times"></i></button></div>
-                <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-1 -mr-1">
+                <div class="space-y-4">
                     <div class="relative w-full aspect-video bg-clover-50 rounded-2xl overflow-hidden border-2 border-dashed border-clover-200 hover:border-clover-300 transition group cursor-pointer" @click="$refs.fileInput.click()"><input type="file" ref="fileInput" accept="image/*" class="hidden" @change="handleImageUpload"><img v-if="shoppingModalData.image" :src="shoppingModalData.image" class="w-full h-full object-cover"><div v-else class="absolute inset-0 flex flex-col items-center justify-center text-clover-300"><i class="fa-solid fa-camera text-2xl mb-2"></i><span class="text-[10px] font-bold tracking-widest">ADD PHOTO</span></div></div>
                     <input v-model="shoppingModalData.name" type="text" placeholder="Name" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"><input v-model="shoppingModalData.link" type="text" placeholder="Link" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"><textarea v-model="shoppingModalData.description" placeholder="Description" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm h-24 resize-none"></textarea>
                     <div><label class="text-[10px] font-bold text-stone tracking-widest block mb-2 pl-1">OWNER</label><div class="grid grid-cols-4 gap-2"><button v-for="member in members" :key="member" @click="shoppingModalData.owner = member" :class="shoppingModalData.owner === member ? 'bg-camel-300 text-white shadow-md' : 'bg-clover-50 text-stone hover:bg-clover-100'" class="py-2. rounded-xl text-[10px] font-medium transition-all truncate">{{ member }}</button></div></div>
@@ -1260,10 +1266,7 @@ createApp({
         const confirmAction = () => {
             const { targetType, targetId } = confirmModal.value;
             if (targetType === 'traffic') trafficList.value = trafficList.value.filter(x => x.id !== targetId);
-            else if (targetType === 'expense') {
-                // The main delete logic was in triggerDeleteExpense, this is mostly for other items
-                // But let's handle safety
-            }
+            else if (targetType === 'expense') {}
             else if (targetType === 'location') locations.value = locations.value.filter(l => l.id !== targetId);
             else if (targetType === 'shopping') shoppingList.value = shoppingList.value.filter(l => l.id !== targetId);
             confirmModal.value.show = false; showToast('Item deleted');
