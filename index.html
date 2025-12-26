@@ -50,6 +50,8 @@
         .scrollbar-thin::-webkit-scrollbar { width: 4px; }
         .scrollbar-thin::-webkit-scrollbar-thumb { background-color: #CDE5D2; border-radius: 4px; }
         .progress-bar { transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+        /* Lock body scroll when modal is open */
+        body.modal-open { overflow: hidden; }
     </style>
 </head>
 <body>
@@ -57,11 +59,14 @@
 <div id="app">
     <div class="app-container font-sans">
         
+        <!-- Loading Overlay -->
         <div v-if="isLoading" class="fixed inset-0 z-[300] bg-washi/95 backdrop-blur-sm flex flex-col items-center justify-center transition-opacity duration-500">
             <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-clover-500 mb-4 shadow-clover"></div>
             <p class="text-xs text-clover-600 tracking-[0.3em] font-bold animate-pulse">LOADING</p>
+            <p v-if="loadingTooLong" class="text-[10px] text-stone mt-4 animate-fade-in-up">正在嘗試讀取離線資料...</p>
         </div>
 
+        <!-- Identity Selection Modal (Fixed Centered) -->
         <div v-if="!currentUser && !isLoading" class="fixed inset-0 z-[250] bg-sumi/90 backdrop-blur-md flex items-center justify-center p-6 animate-fade-in-up">
             <div class="bg-white w-full max-w-xs rounded-[32px] p-8 text-center shadow-2xl relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-clover-300 to-clover-500"></div>
@@ -76,6 +81,7 @@
             </div>
         </div>
 
+        <!-- Toast Notification -->
         <transition name="toast">
             <div v-if="toast.show" class="fixed top-8 left-1/2 transform -translate-x-1/2 z-[260] bg-white/95 backdrop-blur-md text-sumi px-6 py-3 rounded-full shadow-clover flex items-center space-x-3 min-w-[200px] justify-center border border-clover-100 ring-1 ring-clover-50">
                 <i :class="toast.icon" class="text-clover-400 text-lg"></i>
@@ -83,6 +89,7 @@
             </div>
         </transition>
 
+        <!-- Image Preview Modal -->
         <div v-if="showImageModal" class="fixed inset-0 z-[200] bg-sumi/95 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer" @click="showImageModal = false">
             <div class="relative max-w-full max-h-full">
                 <img :src="viewImageSrc" class="max-w-full max-h-[85vh] rounded-2xl shadow-2xl animate-bounce-in object-contain bg-white" @click.stop alt="preview image">
@@ -90,6 +97,7 @@
             </div>
         </div>
 
+        <!-- Confirm Dialog -->
         <div v-if="confirmModal.show" class="absolute inset-0 bg-sumi/20 backdrop-blur-[2px] z-[210] flex items-center justify-center p-8">
             <div class="bg-white w-full max-w-xs rounded-[32px] p-8 shadow-clover animate-bounce-in text-center border border-clover-50">
                 <h3 class="text-lg font-bold text-sumi mb-2 tracking-wide">{{ confirmModal.title }}</h3>
@@ -101,6 +109,7 @@
             </div>
         </div>
 
+        <!-- Expense Action Modal (Edit/Delete) -->
         <div v-if="expenseActionModal.show" class="absolute inset-0 bg-sumi/30 backdrop-blur-sm z-[220] flex items-end sm:items-center justify-center">
             <div class="bg-white w-full sm:max-w-xs rounded-t-[32px] sm:rounded-[32px] p-6 shadow-2xl animate-fade-in-up">
                 <div class="flex items-start space-x-4 mb-6">
@@ -125,14 +134,19 @@
             </div>
         </div>
 
+        <!-- Header -->
         <header class="bg-washi/95 backdrop-blur-sm z-20 sticky top-0 pt-8 pb-2 px-6 shadow-[0_4px_30px_-10px_rgba(0,0,0,0.02)]">
             <div class="flex justify-between items-center mb-6">
                 <div>
                     <h1 class="text-2xl font-light tracking-widest text-clover-600 flex items-center">
                         NAGOYA <i class="fa-solid fa-clover text-sm ml-2 text-clover-300 transform -rotate-12"></i>
                     </h1>
-                    <p class="text-[10px] text-stone tracking-[0.15em] mt-1 font-medium">
+                    <p class="text-[10px] text-stone tracking-[0.15em] mt-1 font-medium flex items-center">
                         2025.12.30 - 2026.01.05
+                        <!-- Network Status Indicator -->
+                        <span v-if="!isOnline" class="ml-2 flex items-center text-red-400 animate-pulse">
+                            <i class="fa-solid fa-wifi text-[8px] mr-1"></i> Offline
+                        </span>
                     </p>
                 </div>
                 <div class="flex items-center space-x-3">
@@ -146,6 +160,7 @@
                 </div>
             </div>
 
+            <!-- Navigation Tabs -->
             <div class="flex justify-between items-center px-1">
                 <nav class="flex space-x-2 mx-auto w-full justify-between max-w-[340px]">
                     <button v-for="tab in ['traffic', 'map', 'split', 'accounting', 'info']" :key="tab" @click="currentTab = tab" :class="currentTab === tab ? 'text-clover-500' : 'text-stone/60 hover:text-stone'" class="flex flex-col items-center transition-all duration-500 group relative py-2 px-2 flex-1">
@@ -161,6 +176,7 @@
 
         <main class="flex-1 overflow-y-auto relative scroll-smooth px-6 pt-2 pb-24" id="main-content">
             
+            <!-- TRAFFIC TAB -->
             <div v-if="currentTab === 'traffic'" class="animate-fade-in-up">
                  <div class="sticky top-0 z-40 bg-washi/95 backdrop-blur-md pt-2 pb-6 -mx-6 px-6 mb-2 border-b border-stone/5">
                     <div class="flex space-x-3 overflow-x-auto no-scrollbar items-center py-1">
@@ -207,6 +223,7 @@
                 <button v-if="!isLocked" @click="openTrafficModal" class="fixed bottom-24 right-6 w-14 h-14 bg-clover-300 text-white rounded-full shadow-lg shadow-clover-200 flex items-center justify-center hover:scale-105 hover:bg-clover-400 transition duration-300 z-20"><i class="fa-solid fa-plus text-xl"></i></button>
             </div>
 
+            <!-- SPLIT TAB (Accounting Shared) -->
             <div v-if="currentTab === 'split'" class="animate-fade-in-up space-y-6 pt-2">
                 <div class="flex justify-between items-center px-2">
                     <div class="text-[10px] text-stone tracking-widest font-bold uppercase">匯率</div>
@@ -237,7 +254,7 @@
                         <div class="flex space-x-3 relative">
                             <div class="flex-1 relative">
                                 <span class="absolute left-4 top-4 text-stone/50 text-sm font-bold">{{ currencyMode === 'JPY' ? '¥' : '$' }}</span>
-                                <input v-model.number="newExpense.inputAmount" type="number" placeholder="0" class="w-full pl-8 bg-clover-50/50 border-none rounded-2xl p-4 text-sm text-sumi focus:ring-2 focus:ring-clover-100 outline-none font-mono" enterkeyhint="done">
+                                <input v-model.number="newExpense.inputAmount" type="number" inputmode="decimal" placeholder="0" class="w-full pl-8 bg-clover-50/50 border-none rounded-2xl p-4 text-sm text-sumi focus:ring-2 focus:ring-clover-100 outline-none font-mono" enterkeyhint="done" onclick="this.select()">
                                 <div v-if="newExpense.inputAmount" class="absolute right-4 top-4.5 text-[10px] text-stone/50 font-mono pointer-events-none">{{ Number(newExpense.inputAmount).toLocaleString() }}</div>
                             </div>
                             <div class="flex items-center justify-center px-4 bg-clover-50/50 rounded-2xl min-w-[90px]"><div class="text-right"><div class="text-[9px] text-stone uppercase tracking-wide">NT$</div><div class="text-xs text-sumi font-bold">{{ calculatedTWD.toLocaleString() }}</div></div></div>
@@ -337,6 +354,7 @@
                 </div>
             </div>
 
+            <!-- MAP TAB -->
             <div v-if="currentTab === 'map'" class="animate-fade-in-up space-y-6 pt-2">
                 <div>
                     <h3 class="text-[10px] text-stone tracking-widest uppercase font-bold mb-3 px-2">常用位置</h3>
@@ -362,6 +380,7 @@
                 </div>
             </div>
 
+            <!-- ACCOUNTING TAB (Personal) -->
             <div v-if="currentTab === 'accounting'" class="animate-fade-in-up space-y-6 pt-2 h-full flex flex-col">
                 <div v-if="!currentUser" class="flex flex-col items-center justify-center h-full text-stone/50">
                      <i class="fa-solid fa-user-lock text-4xl mb-4 text-clover-200"></i>
@@ -375,7 +394,7 @@
                             <h2 class="text-[10px] tracking-[0.2em] opacity-80 uppercase mb-2">旅遊預算</h2>
                             <div class="flex items-baseline space-x-2">
                                 <span class="text-xl font-bold">NT$</span>
-                                <input type="number" v-model.lazy="myBudgetTWD" @change="saveBudget" class="bg-transparent border-b border-white/30 w-32 text-3xl font-bold font-mono focus:outline-none focus:border-white text-white placeholder-white/30" placeholder="0">
+                                <input type="number" inputmode="decimal" v-model.lazy="myBudgetTWD" @change="saveBudget" onclick="this.select()" class="bg-transparent border-b border-white/30 w-32 text-3xl font-bold font-mono focus:outline-none focus:border-white text-white placeholder-white/30" placeholder="0">
                                 <span class="text-sm opacity-70 font-mono ml-2">≈ ¥ {{ (myBudgetTWD / exchangeRate).toFixed(0) }}</span>
                             </div>
                          </div>
@@ -507,6 +526,7 @@
                 </div>
             </div>
 
+            <!-- INFO TAB -->
             <div v-if="currentTab === 'info'" class="animate-fade-in-up pt-2">
                 <div class="px-2 mb-4">
                     <h2 class="text-[10px] tracking-widest font-bold uppercase text-stone mb-4 pl-4 border-l-2 border-clover-300 flex justify-between items-center">
@@ -565,7 +585,7 @@
                     <div class="flex space-x-3 relative">
                         <div class="flex-1 relative">
                             <span class="absolute left-4 top-4 text-stone/50 text-sm font-bold">¥</span>
-                            <input v-model.number="personalExpenseData.amount" type="number" placeholder="0" class="w-full pl-8 bg-stone-50 border-none rounded-2xl p-4 text-sm text-sumi focus:ring-2 focus:ring-stone-200 outline-none font-mono" enterkeyhint="done">
+                            <input v-model.number="personalExpenseData.amount" type="number" inputmode="decimal" placeholder="0" class="w-full pl-8 bg-stone-50 border-none rounded-2xl p-4 text-sm text-sumi focus:ring-2 focus:ring-stone-200 outline-none font-mono" enterkeyhint="done" onclick="this.select()">
                         </div>
                         <div class="flex items-center justify-center px-4 bg-stone-50 rounded-2xl min-w-[90px]"><div class="text-right"><div class="text-[9px] text-stone uppercase tracking-wide">NT$</div><div class="text-xs text-sumi font-bold">{{ Math.round(personalExpenseData.amount * exchangeRate).toLocaleString() }}</div></div></div>
                     </div>
@@ -592,7 +612,7 @@
                         <button @click="settleData.currency = 'TWD'" :class="settleData.currency === 'TWD' ? 'bg-sumi text-white' : 'bg-white text-stone border border-stone/10'" class="px-4 py-1.5 rounded-lg text-xs font-bold transition">TWD</button>
                         <button @click="settleData.currency = 'JPY'" :class="settleData.currency === 'JPY' ? 'bg-sumi text-white' : 'bg-white text-stone border border-stone/10'" class="px-4 py-1.5 rounded-lg text-xs font-bold transition">JPY</button>
                     </div>
-                    <input v-model.number="settleData.amount" type="number" placeholder="Amount" class="w-full bg-white border-none rounded-xl p-3 text-center text-xl font-bold font-mono outline-none focus:ring-2 focus:ring-clover-200">
+                    <input v-model.number="settleData.amount" type="number" inputmode="decimal" placeholder="Amount" class="w-full bg-white border-none rounded-xl p-3 text-center text-xl font-bold font-mono outline-none focus:ring-2 focus:ring-clover-200" onclick="this.select()">
                     <div class="text-[10px] text-stone mt-2" v-if="settleData.currency === 'JPY'">
                         ≈ NT$ {{ Math.round(settleData.amount * exchangeRate).toLocaleString() }}
                     </div>
@@ -709,9 +729,11 @@ createApp({
     setup() {
         const isRemoteUpdate = ref(false);
         const isLoading = ref(true);
+        const loadingTooLong = ref(false); // To show message if slow
         const isSubmitting = ref(false); 
         const currentUser = ref(null);
         const isLocked = ref(false); 
+        const isOnline = ref(navigator.onLine);
         
         // FIX: Protection flag to prevent overwriting DB on initial load
         const isFirebaseReady = ref(false);
@@ -796,7 +818,19 @@ createApp({
         const showToast = (msg, type = 'success') => { toast.value = { show: true, message: msg, icon: type === 'error' ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-clover' }; setTimeout(() => { toast.value.show = false; }, 3000); };
         const openImageModal = (src) => { viewImageSrc.value = src; showImageModal.value = true; };
         
+        // Lock body scroll when any modal is open
+        const anyModalOpen = computed(() => showImageModal.value || confirmModal.value.show || expenseActionModal.value.show || showPersonalExpenseModal.value || showSettleModal.value || showHistoryModal.value || showTrafficModal.value || showLocationModal.value || showShoppingModal.value);
+        watch(anyModalOpen, (val) => {
+            if (val) document.body.classList.add('modal-open');
+            else document.body.classList.remove('modal-open');
+        });
+
+        // Network Status Listeners
+        window.addEventListener('online', () => { isOnline.value = true; showToast('網路已恢復', 'success'); });
+        window.addEventListener('offline', () => { isOnline.value = false; showToast('網路已斷開，進入離線模式', 'error'); });
+
         const fetchRealTimeExchangeRate = async () => {
+            if(!isOnline.value) return;
             try {
                 const res = await fetch('https://api.exchangerate-api.com/v4/latest/JPY');
                 const data = await res.json();
@@ -826,7 +860,7 @@ createApp({
         };
 
         const uploadImageToStorage = async (base64String, folderName) => {
-            if (!base64String || !storage) return '';
+            if (!base64String || !storage || !isOnline.value) return base64String; // Return base64 if offline
             if (base64String.startsWith('http')) return base64String;
 
             try {
@@ -837,8 +871,8 @@ createApp({
                 return downloadURL;
             } catch (error) {
                 console.error("Upload failed:", error);
-                showToast("圖片上傳失敗", "error");
-                return '';
+                showToast("圖片上傳失敗(離線)", "error");
+                return base64String; // Fallback to base64
             }
         };
 
@@ -870,27 +904,46 @@ createApp({
             }
         };
 
-        onMounted(() => {
+        // Load Local Data (Fallback)
+        const loadLocalData = () => {
             try {
-                // FIX: Commented out local load for critical data to prevent overwrite before firebase load
-                // if(localStorage.getItem('traffic')) trafficList.value = JSON.parse(localStorage.getItem('traffic'));
-                // if(localStorage.getItem('expenses')) expenses.value = JSON.parse(localStorage.getItem('expenses'));
+                if(localStorage.getItem('traffic')) trafficList.value = JSON.parse(localStorage.getItem('traffic'));
+                if(localStorage.getItem('expenses')) expenses.value = JSON.parse(localStorage.getItem('expenses'));
                 if(localStorage.getItem('locations')) locations.value = JSON.parse(localStorage.getItem('locations'));
                 if(localStorage.getItem('shopping_list')) shoppingList.value = JSON.parse(localStorage.getItem('shopping_list'));
                 if(localStorage.getItem('exchangeRate')) exchangeRate.value = parseFloat(localStorage.getItem('exchangeRate'));
                 if(localStorage.getItem('userBudgets')) userBudgets.value = JSON.parse(localStorage.getItem('userBudgets'));
+                console.log("Loaded local data");
             } catch(e) { console.error('Local Load Error', e); }
+        };
 
+        onMounted(() => {
             const savedUser = localStorage.getItem('nagoya_user');
             if(savedUser && members.value.includes(savedUser)) setUser(savedUser);
             
+            // Timeout safety for poor connection
+            setTimeout(() => {
+                if(isLoading.value) {
+                    loadingTooLong.value = true;
+                }
+            }, 3000);
+
+            // Force load local if firebase hangs for 5 seconds
+            setTimeout(() => {
+                if(isLoading.value) {
+                    isLoading.value = false;
+                    loadLocalData();
+                    isFirebaseReady.value = true; // Allow writing local updates to eventually sync
+                    showToast('網路逾時，使用離線資料', 'error');
+                }
+            }, 6000);
+
             if(db) {
                 let loadCheck = 0;
                 const checkLoad = () => { 
                     loadCheck++; 
                     if(loadCheck >= 2) { 
                         isLoading.value = false;
-                        // FIX: Mark firebase as ready so watchers can start syncing
                         isFirebaseReady.value = true;
                     } 
                 };
@@ -916,17 +969,11 @@ createApp({
                 
                 onValue(dbRef(db, 'exchangeRate'), (s) => { if(s.val()) exchangeRate.value = parseFloat(s.val()); });
                 onValue(dbRef(db, 'global_settings/is_locked'), (s) => { isLocked.value = !!s.val(); });
+            } else {
+                // If DB init failed entirely
+                loadLocalData();
+                isLoading.value = false;
             }
-
-            setTimeout(() => {
-                if (isLoading.value) {
-                    console.warn("Force clearing loading state");
-                    isLoading.value = false;
-                    // Fallback: allow writes if firebase times out (user might be offline but wants to add data)
-                    // Risk: might overwrite if online later. Better to keep it safe or assume ready.
-                    isFirebaseReady.value = true;
-                }
-            }, 5000); 
 
             fetchRealTimeExchangeRate();
             fetchWeather();
@@ -936,8 +983,7 @@ createApp({
             watch(source, (v) => {
                 if (isRemoteUpdate.value) return;
                 localStorage.setItem(storageKey, JSON.stringify(v));
-                // FIX: Only write to DB if Firebase has initialized. 
-                // This prevents the "Load Local -> Write Old Data -> Overwrite Remote" bug.
+                // FIX: Only write to DB if Firebase has initialized OR timed out. 
                 if(db && isFirebaseReady.value) set(dbRef(db, dbPath), v);
             }, { deep: true });
         };
@@ -1214,7 +1260,10 @@ createApp({
         const confirmAction = () => {
             const { targetType, targetId } = confirmModal.value;
             if (targetType === 'traffic') trafficList.value = trafficList.value.filter(x => x.id !== targetId);
-            else if (targetType === 'expense') {}
+            else if (targetType === 'expense') {
+                // The main delete logic was in triggerDeleteExpense, this is mostly for other items
+                // But let's handle safety
+            }
             else if (targetType === 'location') locations.value = locations.value.filter(l => l.id !== targetId);
             else if (targetType === 'shopping') shoppingList.value = shoppingList.value.filter(l => l.id !== targetId);
             confirmModal.value.show = false; showToast('Item deleted');
@@ -1480,7 +1529,7 @@ createApp({
         };
 
         return {
-            isLoading, isSubmitting, currentUser, setUser, isLocked, confirmLogout, toggleGlobalLock,
+            isLoading, loadingTooLong, isSubmitting, currentUser, setUser, isLocked, confirmLogout, toggleGlobalLock, isOnline,
             currentTab, tabNameMap, currentDay, days, members, expenses, newExpense, totalExpense, debts, addExpense, msgContainer, askDelete, confirmModal, confirmAction, exchangeRate, currencyMode, calculatedTWD, trafficList, filteredTraffic, showTrafficModal, trafficModalData, openTrafficModal, saveTraffic, editTraffic, copyTraffic, getTransportIcon, isEditingTraffic, toast, selectedPayerForDetail, locations, showLocationModal, locationModalData, openLocationModal, editLocation, saveLocation, isEditingLocation, shoppingList, showShoppingModal, shoppingModalData, openShoppingModal, editShopping, saveShoppingItem, isEditingShopping, handleImageUpload, currentShoppingMember, toggleShoppingMember, filteredShoppingList, sortedShoppingList, toggleBought, weatherCity, weatherData, fetchWeather, getWeatherDay, getWeatherIcon, handleExpenseImage, showImageModal, viewImageSrc, openImageModal, exportToCSV,
             isToday, currentTimePercent,
             toggleBeneficiary, toggleAllBeneficiaries, isAllBeneficiaries,
