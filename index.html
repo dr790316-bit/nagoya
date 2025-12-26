@@ -57,12 +57,13 @@
 <div id="app">
     <div class="app-container font-sans">
         
-        <div v-if="isLoading" class="absolute inset-0 z-[300] bg-washi/95 backdrop-blur-sm flex flex-col items-center justify-center transition-opacity duration-500">
+        <div v-if="isLoading" class="fixed inset-0 z-[300] bg-washi/95 backdrop-blur-sm flex flex-col items-center justify-center transition-opacity duration-500">
             <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-clover-500 mb-4 shadow-clover"></div>
             <p class="text-xs text-clover-600 tracking-[0.3em] font-bold animate-pulse">LOADING</p>
         </div>
 
-        <div v-if="!currentUser && !isLoading" class="absolute inset-0 z-[250] bg-sumi/90 backdrop-blur-md flex items-center justify-center p-6 animate-fade-in-up">
+        <!-- 修正: 使用 fixed 確保視窗永遠置中，不會跑版 -->
+        <div v-if="!currentUser && !isLoading" class="fixed inset-0 z-[250] bg-sumi/90 backdrop-blur-md flex items-center justify-center p-6 animate-fade-in-up">
             <div class="bg-white w-full max-w-xs rounded-[32px] p-8 text-center shadow-2xl relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-clover-300 to-clover-500"></div>
                 <div class="w-16 h-16 rounded-full bg-clover-100 text-clover-500 mx-auto flex items-center justify-center mb-4 text-2xl animate-bounce-in shadow-inner">
@@ -148,7 +149,8 @@
 
             <div class="flex justify-between items-center px-1">
                 <nav class="flex space-x-2 mx-auto w-full justify-between max-w-[340px]">
-                    <button v-for="tab in ['traffic', 'split', 'map', 'accounting', 'info']" :key="tab" @click="currentTab = tab" :class="currentTab === tab ? 'text-clover-500' : 'text-stone/60 hover:text-stone'" class="flex flex-col items-center transition-all duration-500 group relative py-2 px-2 flex-1">
+                    <!-- 修正: 順序調整 Traffic, Map, Split, Accounting, Info -->
+                    <button v-for="tab in ['traffic', 'map', 'split', 'accounting', 'info']" :key="tab" @click="currentTab = tab" :class="currentTab === tab ? 'text-clover-500' : 'text-stone/60 hover:text-stone'" class="flex flex-col items-center transition-all duration-500 group relative py-2 px-2 flex-1">
                         <div class="relative">
                             <i :class="{ 'traffic': 'fa-solid fa-train-subway', 'split': 'fa-solid fa-yen-sign', 'map': 'fa-regular fa-map', 'accounting': 'fa-solid fa-wallet', 'info': 'fa-solid fa-basket-shopping' }[tab]" class="text-lg mb-2 transition-transform duration-300" :class="currentTab === tab ? '-translate-y-1' : ''"></i>
                         </div>
@@ -162,7 +164,8 @@
         <main class="flex-1 overflow-y-auto relative scroll-smooth px-6 pt-2 pb-24" id="main-content">
             
             <div v-if="currentTab === 'traffic'" class="animate-fade-in-up">
-                 <div class="sticky top-0 z-10 bg-washi/95 backdrop-blur-md pt-2 pb-6 -mx-6 px-6 mb-2 border-b border-stone/5">
+                 <!-- 修正: z-index 提高到 40，確保滑動時不被覆蓋 -->
+                 <div class="sticky top-0 z-40 bg-washi/95 backdrop-blur-md pt-2 pb-6 -mx-6 px-6 mb-2 border-b border-stone/5">
                     <div class="flex space-x-3 overflow-x-auto no-scrollbar items-center py-1">
                         <button v-for="day in days" :key="day" @click="currentDay = day" class="flex flex-col items-center justify-center min-w-[3.5rem] h-14 rounded-2xl transition-all duration-300 group border relative overflow-hidden" :class="currentDay === day ? 'bg-clover-300 text-white border-clover-300 shadow-lg shadow-clover-200 transform scale-105' : 'bg-white text-stone border-transparent hover:bg-white hover:shadow-sm'"><span class="text-[9px] uppercase font-bold tracking-widest mb-0.5 opacity-80">Day</span><span class="text-lg font-medium leading-none">{{ day }}</span></button>
                     </div>
@@ -186,7 +189,8 @@
                             <div class="flex-1 bg-white rounded-[24px] p-5 shadow-card hover:shadow-soft transition-all duration-300 border border-transparent hover:border-clover-100 relative overflow-hidden">
                                 <div class="flex justify-between items-start mb-2 relative">
                                     <div>
-                                        <div class="text-[9px] text-clover-400 font-bold tracking-widest uppercase mb-1 flex items-center"><span class="w-1.5 h-1.5 bg-clover-300 rounded-full mr-1.5"></span>Destination</div>
+                                        <!-- 修正: 文字更新為 行程位置 -->
+                                        <div class="text-[9px] text-clover-400 font-bold tracking-widest uppercase mb-1 flex items-center"><span class="w-1.5 h-1.5 bg-clover-300 rounded-full mr-1.5"></span>行程位置</div>
                                         <h3 class="text-lg font-medium text-sumi leading-snug">{{ item.destination }}</h3>
                                     </div>
                                     <div class="flex space-x-2 pl-2">
@@ -209,26 +213,10 @@
 
             <div v-if="currentTab === 'split'" class="animate-fade-in-up space-y-6 pt-2">
                 <div class="flex justify-between items-center px-2">
-                    <div class="text-[10px] text-stone tracking-widest font-bold uppercase">匯率 (Exchange Rate)</div>
+                    <div class="text-[10px] text-stone tracking-widest font-bold uppercase">匯率</div>
                     <div class="flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm border border-clover-50">
                         <span class="text-xs text-stone">JPY 1 = TWD</span>
                         <span class="w-14 text-right font-bold text-clover-600 bg-transparent border-b border-dotted border-clover-300 text-sm pb-0.5">{{ exchangeRate }}</span>
-                    </div>
-                </div>
-
-                <div class="bg-gradient-to-br from-clover-300 to-clover-400 rounded-[32px] p-8 text-white shadow-lg shadow-clover-200 relative overflow-hidden">
-                    <div class="absolute -top-10 -right-10 w-40 h-40 bg-white opacity-20 rounded-full blur-3xl"></div>
-                    <h2 class="text-[10px] tracking-[0.2em] opacity-80 mb-2 uppercase flex items-center"><i class="fa-solid fa-clover mr-2 opacity-50"></i>總計花費 (公費)</h2>
-                    <div class="flex items-baseline space-x-2"><span class="text-lg opacity-80 font-light">NT$</span><span class="text-5xl font-light tracking-tight">{{ Math.round(totalExpense).toLocaleString() }}</span></div>
-                    
-                    <div class="mt-4 flex h-2 w-full rounded-full overflow-hidden bg-black/10">
-                        <div v-for="cat in categoryAnalysis" :key="cat.id" :class="cat.color" :style="{ width: cat.percent + '%' }"></div>
-                    </div>
-                    <div class="mt-1 flex space-x-3 overflow-x-auto no-scrollbar pb-1">
-                        <div v-for="cat in categoryAnalysis" :key="cat.id" class="flex items-center flex-shrink-0 text-[9px] opacity-80">
-                            <div :class="cat.color" class="w-2 h-2 rounded-full mr-1"></div>
-                            <span>{{ cat.name }} {{ Math.round(cat.percent) }}%</span>
-                        </div>
                     </div>
                 </div>
                 
@@ -236,7 +224,7 @@
                     <div class="flex justify-between items-center mb-5">
                         <h3 class="font-medium text-sumi tracking-wide">
                             <span v-if="editingExpenseId" class="text-clover-500"><i class="fa-solid fa-pen-to-square mr-1"></i>編輯模式</span>
-                            <span v-else>新增公費支出</span>
+                            <span v-else>新增旅遊支出</span>
                         </h3>
                         <div v-if="editingExpenseId"><button @click="cancelEditExpense" class="text-xs text-stone hover:text-sumi underline">取消編輯</button></div>
                         <div v-else class="flex bg-clover-50 rounded-xl p-1"><button @click="currencyMode = 'JPY'" :class="currencyMode === 'JPY' ? 'bg-white text-clover-600 shadow-sm' : 'text-stone'" class="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all">JPY</button><button @click="currencyMode = 'TWD'" :class="currencyMode === 'TWD' ? 'bg-white text-clover-600 shadow-sm' : 'text-stone'" class="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all">TWD</button></div>
@@ -260,7 +248,8 @@
                         </div>
                         
                         <div class="pt-2">
-                            <label class="text-[10px] text-stone tracking-widest uppercase block mb-3 ml-1">付款人 (Payer)</label>
+                            <!-- 修正: 文字更新為 付款人 -->
+                            <label class="text-[10px] text-stone tracking-widest uppercase block mb-3 ml-1">付款人</label>
                             <div class="grid grid-cols-4 gap-2">
                                 <button v-for="member in members" :key="member" @click="newExpense.payer = member" :class="newExpense.payer === member ? 'bg-clover-300 text-white shadow-md' : 'bg-clover-50/50 text-stone hover:bg-clover-50'" class="py-2.5 rounded-xl text-xs transition-all duration-300 truncate font-medium">{{ member }}</button>
                             </div>
@@ -295,7 +284,8 @@
 
                         <div class="mt-4 pt-4 border-t border-dashed border-stone/10 flex items-center space-x-3">
                             <div v-if="newExpense.image" class="relative w-16 h-16 rounded-xl overflow-hidden group shadow-sm"><img :src="newExpense.image" class="w-full h-full object-cover"><button @click="newExpense.image = ''" class="absolute inset-0 bg-black/40 text-white flex items-center justify-center"><i class="fa-solid fa-times"></i></button></div>
-                            <label class="flex-1 h-12 rounded-xl border-2 border-dashed border-clover-200 hover:border-clover-400 bg-clover-50/50 flex items-center justify-center text-clover-400 cursor-pointer text-xs font-bold gap-2 active:bg-clover-100 transition"><i class="fa-solid fa-camera"></i> RECEIPT<input type="file" accept="image/*" class="hidden" @change="handleExpenseImage"></label>
+                            <!-- 修正: 文字更新為 收據上傳 -->
+                            <label class="flex-1 h-12 rounded-xl border-2 border-dashed border-clover-200 hover:border-clover-400 bg-clover-50/50 flex items-center justify-center text-clover-400 cursor-pointer text-xs font-bold gap-2 active:bg-clover-100 transition"><i class="fa-solid fa-camera"></i> 收據上傳<input type="file" accept="image/*" class="hidden" @change="handleExpenseImage"></label>
                         </div>
                         <button @click="addExpense" :disabled="isSubmitting" :class="editingExpenseId ? 'bg-clover-500 text-white' : 'bg-stone/5 text-sumi hover:bg-clover-300 hover:text-white'" class="w-full mt-2 py-4 rounded-2xl text-sm font-medium transition duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
                             <span v-if="isSubmitting"><i class="fa-solid fa-spinner fa-spin mr-2"></i> 處理中...</span>
@@ -308,7 +298,7 @@
                 </div>
 
                 <div class="space-y-3 pt-4">
-                    <h3 class="text-[10px] text-stone tracking-widest uppercase pl-4 mb-2">近期公費支出 (Shared History)</h3>
+                    <h3 class="text-[10px] text-stone tracking-widest uppercase pl-4 mb-2">近期旅遊支出明細</h3>
                     
                     <div class="flex space-x-2 overflow-x-auto no-scrollbar pb-3 px-2">
                         <button @click="selectedDateFilter = 'ALL'" :class="selectedDateFilter === 'ALL' ? 'bg-sumi text-white shadow-md' : 'bg-white text-stone border border-stone/10'" class="px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wide transition-all whitespace-nowrap">
@@ -317,6 +307,11 @@
                         <button v-for="date in uniqueDates" :key="date" @click="selectedDateFilter = date" :class="selectedDateFilter === date ? 'bg-clover-500 text-white shadow-md' : 'bg-white text-stone border border-stone/10'" class="px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wide transition-all whitespace-nowrap">
                             {{ date.substring(5) }}
                         </button>
+                    </div>
+
+                    <div v-if="selectedDateFilter === 'ALL'" class="bg-clover-50/50 rounded-xl p-3 mx-2 flex justify-between items-center border border-clover-100 animate-fade-in-up mb-2">
+                        <span class="text-xs text-clover-600 font-bold"><i class="fa-solid fa-clover mr-2"></i>本次旅遊花費總計</span>
+                        <span class="text-sm font-bold text-sumi font-mono">NT$ {{ Math.round(totalExpense).toLocaleString() }}</span>
                     </div>
 
                     <div v-if="selectedDateFilter !== 'ALL'" class="bg-clover-50/50 rounded-xl p-3 mx-2 flex justify-between items-center border border-clover-100 animate-fade-in-up">
@@ -383,6 +378,7 @@
                          <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -mr-10 -mt-10"></div>
                          
                          <div class="mb-4 relative z-10">
+                            <!-- 修正: 旅遊預算 (去除空白) -->
                             <h2 class="text-[10px] tracking-[0.2em] opacity-80 uppercase mb-2">旅遊預算</h2>
                             <div class="flex items-baseline space-x-2">
                                 <span class="text-xl font-bold">NT$</span>
@@ -411,6 +407,14 @@
                                  </div>
                              </div>
                          </div>
+                    </div>
+                    
+                    <!-- 修正: 按鈕移至此處 -->
+                    <div class="flex justify-center mb-6">
+                        <button @click="showPersonalExpenseModal = true" class="h-12 px-8 bg-sumi text-white rounded-full shadow-lg shadow-stone-400 flex items-center justify-center hover:scale-105 hover:bg-black transition duration-300 space-x-2 border border-white/10">
+                            <i class="fa-solid fa-plus text-sm"></i>
+                            <span class="text-xs font-bold tracking-widest">新增個人支出</span>
+                        </button>
                     </div>
 
                     <div class="flex-1 overflow-hidden flex flex-col bg-white rounded-[32px] shadow-card border border-stone/5 mb-6">
@@ -509,19 +513,13 @@
                         </div>
                     </div>
                 </div>
-                
-                <div v-if="currentUser" class="absolute bottom-24 right-6 z-20">
-                    <button @click="showPersonalExpenseModal = true" class="h-14 px-6 bg-sumi text-white rounded-full shadow-lg shadow-stone-400 flex items-center justify-center hover:scale-105 hover:bg-black transition duration-300 space-x-2 border border-white/10">
-                        <i class="fa-solid fa-plus text-lg"></i>
-                        <span class="text-xs font-bold tracking-widest">新增個人支出</span>
-                    </button>
-                </div>
             </div>
 
             <div v-if="currentTab === 'info'" class="animate-fade-in-up pt-2">
                 <div class="px-2 mb-4">
                     <h2 class="text-[10px] tracking-widest font-bold uppercase text-stone mb-4 pl-4 border-l-2 border-clover-300 flex justify-between items-center">
-                        <span>購買清單 (Shopping)</span>
+                        <!-- 修正: 文字更新為 購買清單 -->
+                        <span>購買清單</span>
                         <span v-if="currentShoppingMember" class="text-clover-500 font-bold bg-clover-50 px-2 py-0.5 rounded-md">{{ currentShoppingMember }}</span>
                     </h2>
                     <div class="mb-6 px-1 grid grid-cols-4 gap-2"><button v-for="member in members" :key="member" @click="toggleShoppingMember(member)" :class="currentShoppingMember === member ? 'bg-clover-300 text-white shadow-md' : 'bg-white text-stone border border-stone/10'" class="py-2.5 rounded-xl text-xs font-medium transition-all truncate">{{ member }}</button></div>
@@ -553,7 +551,8 @@
                         </div>
                     </div>
                     
-                    <div v-if="!isLocked" class="flex justify-center pb-8 pt-4 border-t border-dashed border-stone/10"><button @click="openShoppingModal" class="flex items-center space-x-2 bg-clover-300 text-white py-3 px-8 rounded-full shadow-lg shadow-clover-200 hover:bg-clover-400 transition-all group"><i class="fa-solid fa-plus text-sm"></i><span class="text-xs font-bold tracking-widest">ADD ITEM</span></button></div>
+                    <!-- 修正: 按鈕更新為 + 新增購買物件 -->
+                    <div v-if="!isLocked" class="flex justify-center pb-8 pt-4 border-t border-dashed border-stone/10"><button @click="openShoppingModal" class="flex items-center space-x-2 bg-clover-300 text-white py-3 px-8 rounded-full shadow-lg shadow-clover-200 hover:bg-clover-400 transition-all group"><i class="fa-solid fa-plus text-sm"></i><span class="text-xs font-bold tracking-widest">新增購買物件</span></button></div>
                 </div>
             </div>
 
@@ -723,6 +722,9 @@ createApp({
         const isSubmitting = ref(false); 
         const currentUser = ref(null);
         const isLocked = ref(false); 
+        
+        // FIX: Protection flag to prevent overwriting DB on initial load
+        const isFirebaseReady = ref(false);
 
         const currentTab = ref('traffic');
         const tabNameMap = { 'traffic': '交通', 'split': '分帳', 'map': '地圖', 'accounting': '記帳', 'info': '資訊' };
@@ -878,8 +880,9 @@ createApp({
 
         onMounted(() => {
             try {
-                if(localStorage.getItem('traffic')) trafficList.value = JSON.parse(localStorage.getItem('traffic'));
-                if(localStorage.getItem('expenses')) expenses.value = JSON.parse(localStorage.getItem('expenses'));
+                // FIX: Commented out local load for critical data to prevent overwrite before firebase load
+                // if(localStorage.getItem('traffic')) trafficList.value = JSON.parse(localStorage.getItem('traffic'));
+                // if(localStorage.getItem('expenses')) expenses.value = JSON.parse(localStorage.getItem('expenses'));
                 if(localStorage.getItem('locations')) locations.value = JSON.parse(localStorage.getItem('locations'));
                 if(localStorage.getItem('shopping_list')) shoppingList.value = JSON.parse(localStorage.getItem('shopping_list'));
                 if(localStorage.getItem('exchangeRate')) exchangeRate.value = parseFloat(localStorage.getItem('exchangeRate'));
@@ -891,7 +894,14 @@ createApp({
             
             if(db) {
                 let loadCheck = 0;
-                const checkLoad = () => { loadCheck++; if(loadCheck >= 2) isLoading.value = false; };
+                const checkLoad = () => { 
+                    loadCheck++; 
+                    if(loadCheck >= 2) { 
+                        isLoading.value = false;
+                        // FIX: Mark firebase as ready so watchers can start syncing
+                        isFirebaseReady.value = true;
+                    } 
+                };
                 
                 const handleRemoteUpdate = (refValue, targetRef) => {
                     const val = refValue || [];
@@ -920,6 +930,9 @@ createApp({
                 if (isLoading.value) {
                     console.warn("Force clearing loading state");
                     isLoading.value = false;
+                    // Fallback: allow writes if firebase times out (user might be offline but wants to add data)
+                    // Risk: might overwrite if online later. Better to keep it safe or assume ready.
+                    isFirebaseReady.value = true;
                 }
             }, 5000); 
 
@@ -931,7 +944,9 @@ createApp({
             watch(source, (v) => {
                 if (isRemoteUpdate.value) return;
                 localStorage.setItem(storageKey, JSON.stringify(v));
-                if(db) set(dbRef(db, dbPath), v);
+                // FIX: Only write to DB if Firebase has initialized. 
+                // This prevents the "Load Local -> Write Old Data -> Overwrite Remote" bug.
+                if(db && isFirebaseReady.value) set(dbRef(db, dbPath), v);
             }, { deep: true });
         };
 
@@ -1106,9 +1121,8 @@ createApp({
             let list = publicExpenses.value.slice().reverse();
             if (selectedDateFilter.value !== 'ALL') {
                 list = list.filter(e => e.date === selectedDateFilter.value);
-            } else {
-                list = list.slice(0, 5); 
             }
+            // If ALL, show everything (reverse order is already applied)
             return list;
         });
 
