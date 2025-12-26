@@ -62,7 +62,6 @@
             <p class="text-xs text-clover-600 tracking-[0.3em] font-bold animate-pulse">LOADING</p>
         </div>
 
-        <!-- 修正: 使用 fixed 確保視窗永遠置中，不會跑版 -->
         <div v-if="!currentUser && !isLoading" class="fixed inset-0 z-[250] bg-sumi/90 backdrop-blur-md flex items-center justify-center p-6 animate-fade-in-up">
             <div class="bg-white w-full max-w-xs rounded-[32px] p-8 text-center shadow-2xl relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-clover-300 to-clover-500"></div>
@@ -149,7 +148,6 @@
 
             <div class="flex justify-between items-center px-1">
                 <nav class="flex space-x-2 mx-auto w-full justify-between max-w-[340px]">
-                    <!-- 修正: 順序調整 Traffic, Map, Split, Accounting, Info -->
                     <button v-for="tab in ['traffic', 'map', 'split', 'accounting', 'info']" :key="tab" @click="currentTab = tab" :class="currentTab === tab ? 'text-clover-500' : 'text-stone/60 hover:text-stone'" class="flex flex-col items-center transition-all duration-500 group relative py-2 px-2 flex-1">
                         <div class="relative">
                             <i :class="{ 'traffic': 'fa-solid fa-train-subway', 'split': 'fa-solid fa-yen-sign', 'map': 'fa-regular fa-map', 'accounting': 'fa-solid fa-wallet', 'info': 'fa-solid fa-basket-shopping' }[tab]" class="text-lg mb-2 transition-transform duration-300" :class="currentTab === tab ? '-translate-y-1' : ''"></i>
@@ -164,7 +162,6 @@
         <main class="flex-1 overflow-y-auto relative scroll-smooth px-6 pt-2 pb-24" id="main-content">
             
             <div v-if="currentTab === 'traffic'" class="animate-fade-in-up">
-                 <!-- 修正: z-index 提高到 40，確保滑動時不被覆蓋 -->
                  <div class="sticky top-0 z-40 bg-washi/95 backdrop-blur-md pt-2 pb-6 -mx-6 px-6 mb-2 border-b border-stone/5">
                     <div class="flex space-x-3 overflow-x-auto no-scrollbar items-center py-1">
                         <button v-for="day in days" :key="day" @click="currentDay = day" class="flex flex-col items-center justify-center min-w-[3.5rem] h-14 rounded-2xl transition-all duration-300 group border relative overflow-hidden" :class="currentDay === day ? 'bg-clover-300 text-white border-clover-300 shadow-lg shadow-clover-200 transform scale-105' : 'bg-white text-stone border-transparent hover:bg-white hover:shadow-sm'"><span class="text-[9px] uppercase font-bold tracking-widest mb-0.5 opacity-80">Day</span><span class="text-lg font-medium leading-none">{{ day }}</span></button>
@@ -189,7 +186,6 @@
                             <div class="flex-1 bg-white rounded-[24px] p-5 shadow-card hover:shadow-soft transition-all duration-300 border border-transparent hover:border-clover-100 relative overflow-hidden">
                                 <div class="flex justify-between items-start mb-2 relative">
                                     <div>
-                                        <!-- 修正: 文字更新為 行程位置 -->
                                         <div class="text-[9px] text-clover-400 font-bold tracking-widest uppercase mb-1 flex items-center"><span class="w-1.5 h-1.5 bg-clover-300 rounded-full mr-1.5"></span>行程位置</div>
                                         <h3 class="text-lg font-medium text-sumi leading-snug">{{ item.destination }}</h3>
                                     </div>
@@ -248,7 +244,6 @@
                         </div>
                         
                         <div class="pt-2">
-                            <!-- 修正: 文字更新為 付款人 -->
                             <label class="text-[10px] text-stone tracking-widest uppercase block mb-3 ml-1">付款人</label>
                             <div class="grid grid-cols-4 gap-2">
                                 <button v-for="member in members" :key="member" @click="newExpense.payer = member" :class="newExpense.payer === member ? 'bg-clover-300 text-white shadow-md' : 'bg-clover-50/50 text-stone hover:bg-clover-50'" class="py-2.5 rounded-xl text-xs transition-all duration-300 truncate font-medium">{{ member }}</button>
@@ -284,7 +279,6 @@
 
                         <div class="mt-4 pt-4 border-t border-dashed border-stone/10 flex items-center space-x-3">
                             <div v-if="newExpense.image" class="relative w-16 h-16 rounded-xl overflow-hidden group shadow-sm"><img :src="newExpense.image" class="w-full h-full object-cover"><button @click="newExpense.image = ''" class="absolute inset-0 bg-black/40 text-white flex items-center justify-center"><i class="fa-solid fa-times"></i></button></div>
-                            <!-- 修正: 文字更新為 收據上傳 -->
                             <label class="flex-1 h-12 rounded-xl border-2 border-dashed border-clover-200 hover:border-clover-400 bg-clover-50/50 flex items-center justify-center text-clover-400 cursor-pointer text-xs font-bold gap-2 active:bg-clover-100 transition"><i class="fa-solid fa-camera"></i> 收據上傳<input type="file" accept="image/*" class="hidden" @change="handleExpenseImage"></label>
                         </div>
                         <button @click="addExpense" :disabled="isSubmitting" :class="editingExpenseId ? 'bg-clover-500 text-white' : 'bg-stone/5 text-sumi hover:bg-clover-300 hover:text-white'" class="w-full mt-2 py-4 rounded-2xl text-sm font-medium transition duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
@@ -378,7 +372,6 @@
                          <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -mr-10 -mt-10"></div>
                          
                          <div class="mb-4 relative z-10">
-                            <!-- 修正: 旅遊預算 (去除空白) -->
                             <h2 class="text-[10px] tracking-[0.2em] opacity-80 uppercase mb-2">旅遊預算</h2>
                             <div class="flex items-baseline space-x-2">
                                 <span class="text-xl font-bold">NT$</span>
@@ -409,7 +402,6 @@
                          </div>
                     </div>
                     
-                    <!-- 修正: 按鈕移至此處 -->
                     <div class="flex justify-center mb-6">
                         <button @click="showPersonalExpenseModal = true" class="h-12 px-8 bg-sumi text-white rounded-full shadow-lg shadow-stone-400 flex items-center justify-center hover:scale-105 hover:bg-black transition duration-300 space-x-2 border border-white/10">
                             <i class="fa-solid fa-plus text-sm"></i>
@@ -518,7 +510,6 @@
             <div v-if="currentTab === 'info'" class="animate-fade-in-up pt-2">
                 <div class="px-2 mb-4">
                     <h2 class="text-[10px] tracking-widest font-bold uppercase text-stone mb-4 pl-4 border-l-2 border-clover-300 flex justify-between items-center">
-                        <!-- 修正: 文字更新為 購買清單 -->
                         <span>購買清單</span>
                         <span v-if="currentShoppingMember" class="text-clover-500 font-bold bg-clover-50 px-2 py-0.5 rounded-md">{{ currentShoppingMember }}</span>
                     </h2>
@@ -551,7 +542,6 @@
                         </div>
                     </div>
                     
-                    <!-- 修正: 按鈕更新為 + 新增購買物件 -->
                     <div v-if="!isLocked" class="flex justify-center pb-8 pt-4 border-t border-dashed border-stone/10"><button @click="openShoppingModal" class="flex items-center space-x-2 bg-clover-300 text-white py-3 px-8 rounded-full shadow-lg shadow-clover-200 hover:bg-clover-400 transition-all group"><i class="fa-solid fa-plus text-sm"></i><span class="text-xs font-bold tracking-widest">新增購買物件</span></button></div>
                 </div>
             </div>
@@ -863,6 +853,8 @@ createApp({
             } else {
                 myBudgetTWD.value = 0;
             }
+            // 修正: 登入時自動篩選為該使用者的購買清單
+            currentShoppingMember.value = name;
         };
         
         const confirmLogout = () => { if(confirm("切換使用者?")) { currentUser.value = null; localStorage.removeItem('nagoya_user'); } };
