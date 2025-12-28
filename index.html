@@ -1,9 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Nagoya Trip 🍀</title>
+    
+    <link rel="icon" type="image/png" href="app-icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="app-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Nagoya Trip">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#F5F9F6">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        clover: { 50: '#F5F9F6', 100: '#E6F2E8', 200: '#CDE5D2', 300: '#A4D1AD', 400: '#7EB989', 500: '#5E9C6B', 600: '#467A51', 700: '#3A6642' },
+                        camel: { 50: '#FCFBF9', 100: '#F5F0E6', 200: '#EADFC9', 300: '#C9B8A3', 400: '#B59F85', 500: '#9E866b' },
+                        washi: '#FFFEFA', sumi: '#444444', stone: '#999999',
+                    },
+                    fontFamily: { sans: ['"Noto Sans JP"', 'sans-serif'] },
+                    boxShadow: { 'soft': '0 8px 30px -8px rgba(164, 209, 173, 0.25)', 'card': '0 4px 20px -4px rgba(0, 0, 0, 0.03)', 'clover': '0 10px 25px -5px rgba(94, 156, 107, 0.2)' },
+                    animation: { 'fade-in-up': 'fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1)', 'bounce-in': 'bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)' },
+                    keyframes: {
+                        fadeInUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        bounceIn: { '0%': { opacity: '0', transform: 'scale(0.9)' }, '100%': { opacity: '1', transform: 'scale(1)' } }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* iOS PWA 體驗優化版樣式 (保留) */
+        body { 
+            background-color: #F5F9F6; 
+            font-family: 'Noto Sans JP', sans-serif; 
+            touch-action: manipulation; 
+            color: #444444; 
+            overscroll-behavior-y: none; /* 防止下拉露出背景 */
+            -webkit-tap-highlight-color: transparent;
+            -webkit-overflow-scrolling: touch; /* iOS 滾動慣性優化 */
+        }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        /* 修改 .app-container 加入 Safe Area 支援 */
+        .app-container { 
+            max-width: 430px; 
+            margin: 0 auto; 
+            background: #FFFEFA; 
+            min-height: 100dvh; 
+            position: relative; 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column;
+            
+            /* iOS PWA 關鍵修正：避開瀏海與底部 Home Bar */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom); 
+        }
+
+        @media (min-width: 640px) { 
+            .app-container { 
+                min-height: 90vh; 
+                margin-top: 5vh; 
+                margin-bottom: 5vh; 
+                border-radius: 48px; 
+                height: 90vh; 
+                border: 8px solid #fff;
+                /* 電腦版不需要 Safe Area Padding */
+                padding-top: 0;
+                padding-bottom: 0;
+            } 
+        }
+
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; } .fade-enter-from, .fade-leave-to { opacity: 0; }
+        .toast-enter-active, .toast-leave-active { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); } .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(-20px) scale(0.95); }
+        .timeline-line { background: linear-gradient(to bottom, #CDE5D2 0%, #CDE5D2 50%, transparent 100%); }
+        button:disabled { cursor: not-allowed; opacity: 0.7; }
+        .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background-color: #CDE5D2; border-radius: 4px; }
+        .progress-bar { transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+        /* 強制鎖定背景滾動，避免 Modal 開啟時背後滑動 */
+        body.modal-open { overflow: hidden; position: fixed; width: 100%; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div class="app-container font-sans">
+        
+        <div v-if="isLoading" class="fixed inset-0 z-[300] bg-washi/95 backdrop-blur-sm flex flex-col items-center justify-center transition-opacity duration-500">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-clover-500 mb-4 shadow-clover"></div>
+            <p class="text-xs text-clover-600 tracking-[0.3em] font-bold animate-pulse">LOADING</p>
+            <p v-if="loadingTooLong" class="text-[10px] text-stone mt-4 animate-fade-in-up">正在嘗試讀取離線資料...</p>
+        </div>
+
+        <div v-if="!currentUser && !isLoading" class="fixed inset-0 z-[250] bg-sumi/90 backdrop-blur-md flex items-center justify-center p-6 animate-fade-in-up">
+            <div class="bg-white w-full max-w-xs rounded-[32px] p-8 text-center shadow-2xl relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-clover-300 to-clover-500"></div>
+                <div class="w-16 h-16 rounded-full bg-clover-100 text-clover-500 mx-auto flex items-center justify-center mb-4 text-2xl animate-bounce-in shadow-inner">
+                    <i class="fa-solid fa-user-astronaut"></i>
+                </div>
+                <h3 class="text-xl font-bold text-sumi mb-2">Who are you?</h3>
+                <p class="text-xs text-stone mb-6">請選擇您的身分以開始使用</p>
+                <div class="grid grid-cols-2 gap-3 max-h-[40vh] overflow-y-auto pr-1">
+                    <button v-for="m in members" :key="m" @click="setUser(m)" class="py-3 rounded-xl bg-stone/5 hover:bg-clover-50 hover:text-clover-600 font-bold text-sm transition-all border border-transparent hover:border-clover-200">{{ m }}</button>
+                </div>
+            </div>
+        </div>
+
+        <transition name="toast">
+            <div v-if="toast.show" class="fixed top-8 left-1/2 transform -translate-x-1/2 z-[260] bg-white/95 backdrop-blur-md text-sumi px-6 py-3 rounded-full shadow-clover flex items-center space-x-3 min-w-[200px] justify-center border border-clover-100 ring-1 ring-clover-50">
+                <i :class="toast.icon" class="text-clover-400 text-lg"></i>
+                <span class="text-sm font-medium tracking-wide">{{ toast.message }}</span>
+            </div>
+        </transition>
+
+        <div v-if="showImageModal" class="fixed inset-0 z-[200] bg-sumi/95 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer" @click="showImageModal = false">
+            <div class="relative max-w-full max-h-full flex items-center justify-center">
+                <img :src="viewImageSrc" class="max-w-full max-h-[85vh] rounded-2xl shadow-2xl animate-bounce-in object-contain bg-white" @click.stop alt="preview image">
+                <button class="absolute -top-12 right-0 text-white/80 hover:text-white text-3xl transition" @click="showImageModal = false"><i class="fa-solid fa-circle-xmark"></i></button>
+            </div>
+        </div>
+
+        <div v-if="confirmModal.show" class="fixed inset-0 bg-sumi/20 backdrop-blur-[2px] z-[210] flex items-center justify-center p-8">
+            <div class="bg-white w-full max-w-xs rounded-[32px] p-8 shadow-clover animate-bounce-in text-center border border-clover-50">
+                <h3 class="text-lg font-bold text-sumi mb-2 tracking-wide">{{ confirmModal.title }}</h3>
+                <p class="text-sm text-stone mb-8 leading-relaxed">{{ confirmModal.message }}</p>
+                <div class="flex space-x-3">
+                    <button @click="confirmModal.show = false" class="flex-1 py-3 rounded-2xl bg-stone/5 text-stone font-medium text-sm hover:bg-stone/10 transition-colors">取消</button>
+                    <button @click="confirmAction" class="flex-1 py-3 rounded-2xl bg-clover-300 text-white font-medium text-sm shadow-lg shadow-clover-200 hover:bg-clover-400 transition-colors">確認</button>
+                </div>
+            </div>
+        </div>
+
+        <header class="bg-washi/95 backdrop-blur-sm z-20 sticky top-0 pt-8 pb-2 px-6 shadow-[0_4px_30px_-10px_rgba(0,0,0,0.02)]">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h1 class="text-2xl font-light tracking-widest text-clover-600 flex items-center">
+                        NAGOYA <i class="fa-solid fa-clover text-sm ml-2 text-clover-300 transform -rotate-12"></i>
+                    </h1>
+                    <p class="text-[10px] text-stone tracking-[0.15em] mt-1 font-medium flex items-center">
+                        2025.12.30 - 2026.01.05
+                        <span v-if="!isOnline" class="ml-2 flex items-center text-red-400 animate-pulse">
+                            <i class="fa-solid fa-wifi text-[8px] mr-1"></i> Offline
+                        </span>
+                    </p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button @click="toggleGlobalLock" :class="isLocked ? 'text-red-400 bg-red-50' : 'text-stone/40 bg-stone/5'" class="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 active:scale-95" aria-label="toggle lock">
+                        <i :class="isLocked ? 'fa-solid fa-lock text-xs' : 'fa-solid fa-lock-open text-xs'"></i>
+                    </button>
+                    <button v-if="currentUser" @click="confirmLogout" class="w-9 h-9 rounded-full bg-clover-100 text-clover-600 flex items-center justify-center text-xs font-bold shadow-sm border border-clover-200 relative group" aria-label="profile">
+                        {{ currentUser.substring(0,1) }}
+                        <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-white rounded-full flex items-center justify-center shadow-sm"><i class="fa-solid fa-rotate text-[8px] text-stone"></i></div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center px-1">
+                <nav class="flex space-x-2 mx-auto w-full justify-between max-w-[340px]">
+                    <button v-for="tab in ['traffic', 'map', 'split', 'accounting', 'info']" :key="tab" @click="currentTab = tab" :class="currentTab === tab ? 'text-clover-500' : 'text-stone/60 hover:text-stone'" class="flex flex-col items-center transition-all duration-500 group relative py-2 px-2 flex-1">
+                        <div class="relative">
+                            <i :class="{ 'traffic': 'fa-solid fa-train-subway', 'split': 'fa-solid fa-yen-sign', 'map': 'fa-regular fa-map', 'accounting': 'fa-solid fa-wallet', 'info': 'fa-solid fa-basket-shopping' }[tab]" class="text-lg mb-2 transition-transform duration-300" :class="currentTab === tab ? '-translate-y-1' : ''"></i>
+                        </div>
+                        <span class="text-[10px] font-bold tracking-widest opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-1">{{ tabNameMap[tab] }}</span>
+                        <div v-if="currentTab === tab" class="absolute bottom-0 w-1 h-1 bg-clover-400 rounded-full"></div>
+                    </button>
+                </nav>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto relative scroll-smooth px-6 pt-2 pb-24" id="main-content">
+            
+            <div v-if="currentTab === 'traffic'" class="animate-fade-in-up">
+                 <div class="sticky top-0 z-40 bg-washi/95 backdrop-blur-md pt-2 pb-6 -mx-6 px-6 mb-2 border-b border-stone/5">
+                    <div class="flex space-x-3 overflow-x-auto no-scrollbar items-center py-1">
+                        <button v-for="day in days" :key="day" @click="currentDay = day" class="flex flex-col items-center justify-center min-w-[3.5rem] h-14 rounded-2xl transition-all duration-300 group border relative overflow-hidden" :class="currentDay === day ? 'bg-clover-300 text-white border-clover-300 shadow-lg shadow-clover-200 transform scale-105' : 'bg-white text-stone border-transparent hover:bg-white hover:shadow-sm'"><span class="text-[9px] uppercase font-bold tracking-widest mb-0.5 opacity-80">Day</span><span class="text-lg font-medium leading-none">{{ day }}</span></button>
+                    </div>
+                </div>
+                <div class="space-y-0 relative min-h-[300px]">
+                    <div v-if="filteredTraffic.length === 0" class="flex flex-col items-center justify-center py-20 text-stone/30"><i class="fa-solid fa-leaf text-4xl mb-4 opacity-30 text-clover-300 animate-pulse"></i><p class="font-light text-xs tracking-[0.2em]">NO SCHEDULE</p></div>
+                    <div v-if="filteredTraffic.length > 0" class="absolute top-6 bottom-12 left-[4.5rem] w-[1px] timeline-line z-0"></div>
+                    
+                    <div v-if="isToday" class="absolute left-[4.5rem] w-full z-0 pointer-events-none" :style="{ top: currentTimePercent + '%' }">
+                         <div class="w-3 h-3 bg-red-400 rounded-full absolute -left-1.5 -top-1.5 ring-4 ring-red-400/20"></div>
+                         <div class="h-[1px] bg-red-400/50 w-full border-t border-dashed border-red-400"></div>
+                    </div>
+
+                    <div v-for="item in filteredTraffic" :key="item.id" class="relative z-10 mb-6 last:mb-0 group">
+                         <div class="flex items-start">
+                            <div class="w-[4.5rem] flex flex-col items-center pt-2 mr-4 flex-shrink-0 bg-washi z-10">
+                                <span class="text-sm font-bold text-clover-600 tracking-wide font-mono">{{ item.time }}</span>
+                                <span v-if="item.endTime" class="text-[10px] text-stone/60 font-mono mt-1">{{ item.endTime }}</span>
+                                <div class="w-8 h-8 rounded-full bg-white border border-clover-100 text-clover-400 flex items-center justify-center text-sm shadow-sm mt-3 mb-2 transition-transform group-hover:scale-110"><i :class="getTransportIcon(item.type)"></i></div>
+                            </div>
+                            <div class="flex-1 bg-white rounded-[24px] p-5 shadow-card hover:shadow-soft transition-all duration-300 border border-transparent hover:border-clover-100 relative overflow-hidden">
+                                <div class="flex justify-between items-start mb-2 relative">
+                                    <div>
+                                        <div class="text-[9px] text-clover-400 font-bold tracking-widest uppercase mb-1 flex items-center"><span class="w-1.5 h-1.5 bg-clover-300 rounded-full mr-1.5"></span>行程位置</div>
+                                        <h3 class="text-lg font-medium text-sumi leading-snug">{{ item.destination }}</h3>
+                                    </div>
+                                    <div class="flex space-x-2 pl-2">
+                                        <a v-if="item.url" :href="item.url" target="_blank" rel="noopener noreferrer" class="w-8 h-8 bg-clover-50 text-clover-500 rounded-full flex items-center justify-center hover:bg-clover-500 hover:text-white transition-colors shadow-sm" aria-label="open info"><i class="fa-solid fa-link text-xs"></i></a>
+                                        <a v-if="item.ticketUrl" :href="item.ticketUrl" target="_blank" rel="noopener noreferrer" class="w-8 h-8 bg-camel-50 text-camel-400 rounded-full flex items-center justify-center hover:bg-camel-400 hover:text-white transition-colors shadow-sm" aria-label="open ticket"><i class="fa-solid fa-ticket text-xs"></i></a>
+                                    </div>
+                                </div>
+                                <p v-if="item.description" class="text-xs text-stone leading-relaxed whitespace-pre-wrap relative z-10 pl-3 border-l-2 border-clover-100">{{ item.description }}</p>
+                                <div v-if="!isLocked" class="flex justify-end space-x-3 mt-4 pt-3 border-t border-clover-50 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button @click="copyTraffic(item)" class="text-xs text-stone hover:text-clover-500 transition-colors flex items-center"><i class="fa-regular fa-copy mr-1"></i> Copy</button>
+                                    <button @click="editTraffic(item)" class="text-xs text-stone hover:text-clover-500 transition-colors flex items-center"><i class="fa-solid fa-pen mr-1"></i> Edit</button>
+                                    <button @click="askDelete('traffic', item.id)" class="text-xs text-stone hover:text-red-400 transition-colors flex items-center"><i class="fa-solid fa-trash-can mr-1"></i> Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button v-if="!isLocked" @click="openTrafficModal" class="fixed bottom-24 right-6 w-14 h-14 bg-clover-300 text-white rounded-full shadow-lg shadow-clover-200 flex items-center justify-center hover:scale-105 hover:bg-clover-400 transition duration-300 z-20"><i class="fa-solid fa-plus text-xl"></i></button>
+            </div>
+
+            <div v-if="currentTab === 'split'" class="animate-fade-in-up space-y-6 pt-2">
+                <div class="flex justify-between items-center px-2">
+                    <div class="text-[10px] text-stone tracking-widest font-bold uppercase">匯率</div>
+                    <div class="flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm border border-clover-50">
+                        <span class="text-xs text-stone">JPY 1 = TWD</span>
+                        <span class="w-14 text-right font-bold text-clover-600 bg-transparent border-b border-dotted border-clover-300 text-sm pb-0.5">{{ exchangeRate }}</span>
+                    </div>
+                </div>
+                
+                <div v-if="!isLocked" class="bg-white rounded-[32px] p-6 shadow-card border border-transparent relative overflow-hidden" id="expense-form">
+                    <div class="flex justify-between items-center mb-5">
+                        <h3 class="font-medium text-sumi tracking-wide">
+                            <span v-if="editingExpenseId" class="text-clover-500"><i class="fa-solid fa-pen-to-square mr-1"></i>編輯模式</span>
+                            <span v-else>新增旅遊支出</span>
+                        </h3>
+                        <div v-if="editingExpenseId"><button @click="cancelEditExpense" class="text-xs text-stone hover:text-sumi underline">取消編輯</button></div>
+                        <div v-else class="flex bg-clover-50 rounded-xl p-1"><button @click="currencyMode = 'JPY'" :class="currencyMode === 'JPY' ? 'bg-white text-clover-600 shadow-sm' : 'text-stone'" class="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all">JPY</button><button @click="currencyMode = 'TWD'" :class="currencyMode === 'TWD' ? 'bg-white text-clover-600 shadow-sm' : 'text-stone'" class="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all">TWD</button></div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-6 gap-2 mb-2">
+                            <button v-for="cat in categories" :key="cat.id" @click="newExpense.category = cat.id" :class="newExpense.category === cat.id ? 'bg-clover-500 text-white shadow-md' : 'bg-stone/5 text-stone/40 hover:bg-clover-50 hover:text-clover-500'" class="flex flex-col items-center justify-center py-2 rounded-xl transition-all">
+                                <i :class="cat.icon" class="text-sm mb-1"></i>
+                                <span class="text-[8px] font-bold">{{ cat.name }}</span>
+                            </button>
+                        </div>
+
+                        <input v-model="newExpense.description" placeholder="項目名稱..." class="w-full bg-clover-50/50 border-none rounded-2xl p-4 text-sm text-sumi focus:ring-2 focus:ring-clover-100 outline-none placeholder-stone/40" enterkeyhint="next">
+                        <div class="flex space-x-3 relative">
+                            <div class="flex-1 relative">
+                                <span class="absolute left-4 top-4 text-stone/50 text-sm font-bold">{{ currencyMode === 'JPY' ? '¥' : '$' }}</span>
+                                <input v-model.number="newExpense.inputAmount" type="number" inputmode="decimal" placeholder="0" class="w-full pl-8 bg-clover-50/50 border-none rounded-2xl p-4 text-sm text-sumi focus:ring-2 focus:ring-clover-100 outline-none font-mono" enterkeyhint="done" onclick="this.select()">
+                                <div v-if="newExpense.inputAmount" class="absolute right-4 top-4.5 text-[10px] text-stone/50 font-mono pointer-events-none">{{ Number(newExpense.inputAmount).toLocaleString() }}</div>
+                            </div>
+                            <div class="flex items-center justify-center px-4 bg-clover-50/50 rounded-2xl min-w-[90px]"><div class="text-right"><div class="text-[9px] text-stone uppercase tracking-wide">NT$</div><div class="text-xs text-sumi font-bold">{{ calculatedTWD.toLocaleString() }}</div></div></div>
+                        </div>
+                        
+                        <div class="pt-2">
+                            <label class="text-[10px] text-stone tracking-widest uppercase block mb-3 ml-1">付款人</label>
+                            <div class="grid grid-cols-4 gap-2">
+                                <button v-for="member in members" :key="member" @click="newExpense.payer = member" :class="newExpense.payer === member ? 'bg-clover-300 text-white shadow-md' : 'bg-clover-50/50 text-stone hover:bg-clover-50'" class="py-2.5 rounded-xl text-xs transition-all duration-300 truncate font-medium">{{ member }}</button>
+                            </div>
+                        </div>
+
+                        <div class="pt-2">
+                            <div class="flex justify-between items-center mb-3 ml-1">
+                                <label class="text-[10px] text-stone tracking-widest uppercase">分攤對象 ({{ newExpense.beneficiaries.length }})</label>
+                                <button @click="toggleAllBeneficiaries" class="text-[10px] text-clover-500 font-bold bg-clover-50 px-2 py-1 rounded-md hover:bg-clover-100 transition">
+                                    {{ newExpense.beneficiaries.length === members.length ? '取消全選' : '全選' }}
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-4 gap-2">
+                                <button v-for="member in members" :key="'ben-'+member" @click="toggleBeneficiary(member)" 
+                                    :class="newExpense.beneficiaries.includes(member) ? 'bg-camel-300 text-white shadow-md' : 'bg-stone/5 text-stone/50 hover:bg-stone/10'" 
+                                    class="py-2.5 rounded-xl text-xs transition-all duration-300 truncate font-medium relative">
+                                    {{ member }}
+                                    <i v-if="newExpense.beneficiaries.includes(member)" class="fa-solid fa-check absolute top-1 right-1 text-[8px] opacity-60"></i>
+                                </button>
+                            </div>
+                            
+                            <div v-if="calculatedTWD > 0" class="mt-3 bg-stone-50 rounded-lg p-2 flex justify-between items-center text-xs">
+                                <div class="text-stone/60">
+                                    <span v-if="newExpense.beneficiaries.length > 0">每人應付 (Per Person):</span>
+                                    <span v-else class="text-red-400 font-bold">⚠️ 未選擇對象</span>
+                                </div>
+                                <div v-if="newExpense.beneficiaries.length > 0" class="font-bold text-sumi font-mono">
+                                    NT$ {{ Math.round(calculatedTWD / newExpense.beneficiaries.length).toLocaleString() }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-4 border-t border-dashed border-stone/10 flex items-center space-x-3">
+                            <div v-if="newExpense.image" class="relative w-16 h-16 rounded-xl overflow-hidden group shadow-sm"><img :src="newExpense.image" class="w-full h-full object-cover"><button @click="newExpense.image = ''" class="absolute inset-0 bg-black/40 text-white flex items-center justify-center"><i class="fa-solid fa-times"></i></button></div>
+                            <label class="flex-1 h-12 rounded-xl border-2 border-dashed border-clover-200 hover:border-clover-400 bg-clover-50/50 flex items-center justify-center text-clover-400 cursor-pointer text-xs font-bold gap-2 active:bg-clover-100 transition"><i class="fa-solid fa-camera"></i> 收據上傳<input type="file" accept="image/*" class="hidden" @change="handleExpenseImage"></label>
+                        </div>
+                        <button @click="addExpense" :disabled="isSubmitting" :class="editingExpenseId ? 'bg-clover-500 text-white' : 'bg-stone/5 text-sumi hover:bg-clover-300 hover:text-white'" class="w-full mt-2 py-4 rounded-2xl text-sm font-medium transition duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span v-if="isSubmitting"><i class="fa-solid fa-spinner fa-spin mr-2"></i> 處理中...</span>
+                            <span v-else>
+                                <i :class="editingExpenseId ? 'fa-solid fa-check' : 'fa-solid fa-plus'" class="mr-2"></i> 
+                                {{ editingExpenseId ? '更新支出 (Update)' : '新增一筆' }}
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-3 pt-4">
+                    <h3 class="text-[10px] text-stone tracking-widest uppercase pl-4 mb-2">近期旅遊支出明細</h3>
+                    
+                    <div class="flex space-x-2 overflow-x-auto no-scrollbar pb-3 px-2">
+                        <button @click="selectedDateFilter = 'ALL'" :class="selectedDateFilter === 'ALL' ? 'bg-sumi text-white shadow-md' : 'bg-white text-stone border border-stone/10'" class="px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wide transition-all whitespace-nowrap">
+                            ALL
+                        </button>
+                        <button v-for="date in uniqueDates" :key="date" @click="selectedDateFilter = date" :class="selectedDateFilter === date ? 'bg-clover-500 text-white shadow-md' : 'bg-white text-stone border border-stone/10'" class="px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wide transition-all whitespace-nowrap">
+                            {{ date.substring(5) }}
+                        </button>
+                    </div>
+
+                    <div v-if="selectedDateFilter === 'ALL'" class="bg-clover-50/50 rounded-xl p-3 mx-2 flex justify-between items-center border border-clover-100 animate-fade-in-up mb-2">
+                        <span class="text-xs text-clover-600 font-bold"><i class="fa-solid fa-clover mr-2"></i>本次旅遊花費總計</span>
+                        <span class="text-sm font-bold text-sumi font-mono">NT$ {{ Math.round(totalExpense).toLocaleString() }}</span>
+                    </div>
+
+                    <div v-if="selectedDateFilter !== 'ALL'" class="bg-clover-50/50 rounded-xl p-3 mx-2 flex justify-between items-center border border-clover-100 animate-fade-in-up">
+                        <span class="text-xs text-clover-600 font-bold"><i class="fa-solid fa-calendar-day mr-2"></i>{{ selectedDateFilter }} 總計</span>
+                        <span class="text-sm font-bold text-sumi font-mono">NT$ {{ Math.round(dailyTotal).toLocaleString() }}</span>
+                    </div>
+
+                    <div v-if="filteredHistory.length === 0" class="text-center text-stone/30 py-6 text-xs">No records</div>
+
+                    <div v-for="(exp, index) in filteredHistory" :key="index" @click="openExpenseAction(exp)" class="bg-white px-5 py-4 rounded-2xl flex justify-between items-start group border border-transparent hover:border-clover-50 shadow-sm transition-all cursor-pointer active:scale-[0.98] animate-fade-in-up" :class="exp.type === 'repayment' ? 'border-l-4 border-green-400 bg-green-50/30' : ''">
+                        <div class="flex items-start space-x-4 overflow-hidden flex-1">
+                            <div v-if="exp.type === 'repayment'" class="w-9 h-9 rounded-full bg-green-100 text-green-500 flex-shrink-0 flex items-center justify-center text-xs font-bold mt-1"><i class="fa-regular fa-handshake"></i></div>
+                            <div v-else class="w-9 h-9 rounded-full bg-clover-50 text-clover-500 flex-shrink-0 flex items-center justify-center text-xs font-bold mt-1">{{ exp.payer.substring(0,1) }}</div>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-sumi text-sm truncate font-medium leading-tight">{{ exp.description }}</p>
+                                <p class="text-[10px] text-stone mt-0.5 mb-1.5">{{ exp.date }} <span class="ml-2 text-stone/50 font-mono">¥{{ calcJPY(exp) }}</span></p>
+                                
+                                <div v-if="!isAllBeneficiaries(exp) && exp.type !== 'repayment'" class="flex flex-wrap gap-1">
+                                    <span v-for="b in exp.beneficiaries" :key="b" class="bg-camel-50 text-camel-500 px-1.5 py-[2px] rounded text-[8px] font-bold tracking-wide">
+                                        {{ b.substring(0,1) }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end pl-2">
+                            <div class="flex items-center space-x-2"><div class="text-sm font-bold text-sumi font-mono">NT$ {{ Math.round(exp.amount).toLocaleString() }}</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="currentTab === 'map'" class="animate-fade-in-up space-y-6 pt-2">
+                <div>
+                    <h3 class="text-[10px] text-stone tracking-widest uppercase font-bold mb-3 px-2">常用位置</h3>
+                    <div class="space-y-3">
+                         <div v-if="locations.length === 0" class="text-center py-8 text-stone/40 text-xs">尚無常用位置</div>
+                        <div v-for="loc in locations" :key="loc.id" class="bg-white rounded-[24px] p-5 shadow-card group relative hover:shadow-soft transition-all">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-1"><i class="fa-solid fa-location-dot text-clover-400"></i><h4 class="text-lg font-medium text-sumi">{{ loc.name }}</h4></div>
+                                    <p class="text-xs text-stone pl-6 mb-3">{{ loc.description }}</p>
+                                    <a v-if="loc.url" :href="loc.url" target="_blank" class="inline-flex items-center space-x-1 text-[10px] font-bold text-camel-400 bg-camel-50 px-3 py-1.5 rounded-full ml-6"><i class="fa-solid fa-map-location-dot"></i><span>Google Maps</span></a>
+                                </div>
+                                <div v-if="!isLocked" class="flex flex-col space-y-2"><button @click="editLocation(loc)" class="w-8 h-8 rounded-full bg-clover-50 text-stone hover:text-clover-500 flex items-center justify-center"><i class="fa-solid fa-pen text-xs"></i></button><button @click="askDelete('location', loc.id)" class="w-8 h-8 rounded-full bg-clover-50 text-stone hover:text-red-400 flex items-center justify-center"><i class="fa-solid fa-trash-can text-xs"></i></button></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="!isLocked" class="flex justify-center mt-6"><button @click="openLocationModal" class="w-14 h-14 rounded-full bg-white border-2 border-dashed border-clover-200 text-clover-400 flex items-center justify-center hover:bg-clover-50 shadow-sm"><i class="fa-solid fa-plus text-xl"></i></button></div>
+                </div>
+                <div class="bg-white rounded-[32px] p-6 shadow-card">
+                    <div class="flex justify-between items-center mb-6"><h3 class="text-[10px] text-stone tracking-widest uppercase font-bold border-l-2 border-clover-300 pl-2">未來一周天氣</h3><select v-model="weatherCity" @change="fetchWeather" class="text-xs font-bold text-clover-600 bg-clover-50 border-none rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-clover-200 outline-none"><option value="Nagoya">名古屋</option><option value="Takayama">高山</option><option value="Shirakawa">合掌村</option><option value="Kanazawa">金澤</option></select></div>
+                    <div v-if="!weatherData.daily" class="text-center py-8 text-stone/40"><i class="fa-solid fa-spinner fa-spin mb-2"></i></div>
+                    <div v-else class="flex overflow-x-auto no-scrollbar space-x-4 pb-2"><div v-for="(day, index) in 7" :key="index" class="flex-shrink-0 flex flex-col items-center min-w-[4rem] bg-clover-50/50 rounded-2xl py-3 px-1"><span class="text-[10px] text-stone font-bold uppercase mb-1">{{ getWeatherDay(index) }}</span><i :class="getWeatherIcon(weatherData.daily.weathercode[index])" class="text-xl text-clover-400 mb-2"></i><div class="flex flex-col items-center text-[10px] font-mono font-medium text-sumi"><span>{{ Math.round(weatherData.daily.temperature_2m_max[index]) }}°</span><span class="text-stone">{{ Math.round(weatherData.daily.temperature_2m_min[index]) }}°</span></div></div></div>
+                </div>
+            </div>
+
+            <div v-if="currentTab === 'accounting'" class="animate-fade-in-up space-y-6 pt-2 h-full flex flex-col">
+                <div v-if="!currentUser" class="flex flex-col items-center justify-center h-full text-stone/50">
+                     <i class="fa-solid fa-user-lock text-4xl mb-4 text-clover-200"></i>
+                     <p class="text-sm">請先選擇身分</p>
+                </div>
+                <div v-else class="flex-1 flex flex-col px-2">
+                    <div class="bg-gradient-to-br from-clover-500 to-clover-700 rounded-[32px] p-8 text-white shadow-lg shadow-clover-200 relative overflow-hidden mb-6 flex-shrink-0 h-auto">
+                         <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                         
+                         <div class="mb-4 relative z-10">
+                            <h2 class="text-[10px] tracking-[0.2em] opacity-80 uppercase mb-2">旅遊預算</h2>
+                            <div class="flex items-baseline space-x-2">
+                                <span class="text-xl font-bold">NT$</span>
+                                <input type="number" inputmode="decimal" v-model.lazy="myBudgetTWD" @change="saveBudget" onclick="this.select()" class="bg-transparent border-b border-white/30 w-32 text-3xl font-bold font-mono focus:outline-none focus:border-white text-white placeholder-white/30" placeholder="0">
+                                <span class="text-sm opacity-70 font-mono ml-2">≈ ¥ {{ (myBudgetTWD / exchangeRate).toFixed(0) }}</span>
+                            </div>
+                         </div>
+
+                         <div class="relative z-10 flex items-end space-x-3">
+                             <div class="flex-shrink-0">
+                                 <div class="text-[10px] opacity-90 mb-0.5">剩餘旅費</div>
+                                 <div class="text-base font-mono text-white/90 leading-none">
+                                     NT$ {{ Math.round(myRemaining).toLocaleString() }} <span class="text-[10px] opacity-70">≈ ¥ {{ Math.round(myRemaining / exchangeRate).toLocaleString() }}</span>
+                                 </div>
+                             </div>
+                             
+                             <div class="flex-1 pb-0.5">
+                                 <div class="h-4 w-full bg-black/20 rounded-full overflow-hidden backdrop-blur-sm border border-white/10 relative">
+                                     <div class="h-full shadow-sm progress-bar absolute left-0 top-0" 
+                                          :class="progressBarColor"
+                                          :style="{ width: Math.max(0, Math.min(100, (myRemaining / (myBudgetTWD || 1)) * 100)) + '%' }">
+                                     </div>
+                                     <div class="absolute right-1 top-0 h-full flex items-center text-[9px] font-bold text-white/90 shadow-sm z-20">
+                                         {{ Math.max(0, Math.round((myRemaining / (myBudgetTWD || 1)) * 100)) }}%
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+                    </div>
+                    
+                    <div class="flex justify-center mb-6">
+                        <button @click="showPersonalExpenseModal = true" class="h-12 px-8 bg-sumi text-white rounded-full shadow-lg shadow-stone-400 flex items-center justify-center hover:scale-105 hover:bg-black transition duration-300 space-x-2 border border-white/10">
+                            <i class="fa-solid fa-plus text-sm"></i>
+                            <span class="text-xs font-bold tracking-widest">新增個人支出</span>
+                        </button>
+                    </div>
+
+                    <div class="flex-1 overflow-hidden flex flex-col bg-white rounded-[32px] shadow-card border border-stone/5 mb-6">
+                        <div class="p-6 pb-2 flex-shrink-0">
+                            <div class="mb-4">
+                                <div class="flex h-1.5 w-full rounded-full overflow-hidden bg-stone-100">
+                                    <div v-for="cat in myCategoryAnalysis" :key="cat.id" :class="cat.color" :style="{ width: cat.percent + '%' }"></div>
+                                </div>
+                                <div class="mt-1 flex space-x-2 overflow-x-auto no-scrollbar">
+                                    <div v-for="cat in myCategoryAnalysis" :key="cat.id" class="flex items-center flex-shrink-0 text-[8px] text-stone-400">
+                                        <div :class="cat.color" class="w-1.5 h-1.5 rounded-full mr-1"></div>
+                                        <span>{{ cat.name }} {{ Math.round(cat.percent) }}%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h3 class="text-xs font-bold text-stone tracking-widest uppercase pl-2 border-l-2 border-clover-300 mb-4 flex justify-between items-center">
+                                <span>{{ currentUser }} 的記帳明細</span>
+                                <span class="bg-clover-50 text-clover-600 px-2 py-0.5 rounded text-[9px] font-bold">My Cost</span>
+                            </h3>
+                            
+                            <div class="flex space-x-2 overflow-x-auto no-scrollbar pb-3">
+                                <button @click="accountingDateFilter = 'ALL'" :class="accountingDateFilter === 'ALL' ? 'bg-sumi text-white shadow-md' : 'bg-white text-stone border border-stone/10'" class="px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wide transition-all whitespace-nowrap">
+                                    ALL
+                                </button>
+                                <button v-for="date in uniqueDates" :key="date" @click="accountingDateFilter = date" :class="accountingDateFilter === date ? 'bg-clover-500 text-white shadow-md' : 'bg-white text-stone border border-stone/10'" class="px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wide transition-all whitespace-nowrap">
+                                    {{ date.substring(5) }}
+                                </button>
+                            </div>
+                            
+                            <div v-if="accountingDateFilter !== 'ALL'" class="bg-clover-50/30 rounded-xl p-2.5 flex justify-between items-center border border-clover-100 mb-2">
+                                <span class="text-[10px] text-clover-700 font-bold"><i class="fa-solid fa-calculator mr-1.5"></i>{{ accountingDateFilter }} 個人花費</span>
+                                <span class="text-xs font-bold text-sumi font-mono">NT$ {{ Math.round(myDailyTotal).toLocaleString() }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex-1 overflow-y-auto px-6 pb-4 space-y-3 scrollbar-thin">
+                             <div v-if="filteredMyExpenses.length === 0" class="text-center py-12 text-stone/30 text-xs">無符合條件的消費紀錄</div>
+                             <div v-for="(exp, index) in filteredMyExpenses" :key="index" @click="openExpenseAction(exp)" class="flex justify-between items-center py-3 border-b border-stone/5 last:border-0 group cursor-pointer active:bg-stone-50 transition">
+                                <div class="flex items-center flex-1 min-w-0">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] mr-3 flex-shrink-0" :class="exp.isPrivate ? 'bg-stone-100 text-stone-500' : 'bg-clover-50 text-clover-500'">
+                                        <i :class="getCategoryIcon(exp.category)"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="flex items-center space-x-2">
+                                            <div class="text-sm font-medium text-sumi truncate">{{ exp.description }}</div>
+                                            <i v-if="exp.isPrivate" class="fa-solid fa-lock text-[8px] text-stone-400" title="Private"></i>
+                                        </div>
+                                        <div class="text-[10px] text-stone flex items-center space-x-2">
+                                            <span>{{ exp.date }}</span>
+                                            <span v-if="exp.isPrivate" class="text-stone-400">私人支出</span>
+                                            <span v-else-if="exp.payer === currentUser" class="bg-stone-100 px-1.5 rounded text-[8px]">我墊付公費</span>
+                                            <span v-else class="text-clover-500">由 {{ exp.payer }} 墊付</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right pl-2">
+                                    <div class="text-sm font-bold text-sumi font-mono">NT$ {{ Math.round(getMyShare(exp, currentUser)).toLocaleString() }}</div>
+                                    <div class="text-[9px] text-stone/40">¥ {{ Math.round(calcJPYFromTWD(getMyShare(exp, currentUser))).toLocaleString() }}</div>
+                                </div>
+                             </div>
+                        </div>
+                    </div>
+
+                    <div v-if="myDebts.length > 0" class="bg-white rounded-[32px] shadow-card border border-stone/5 flex-shrink-0 p-6 mb-24">
+                        <h3 class="text-[10px] text-stone tracking-widest uppercase font-bold mb-4 flex items-center border-l-2 border-clover-300 pl-2">
+                            結算建議 (Settlement)
+                        </h3>
+                        <div class="space-y-3">
+                            <div v-for="debt in myDebts" :key="debt.from + debt.to" class="flex justify-between items-center bg-stone-50 p-3 rounded-xl border border-stone/10">
+                                <div class="flex flex-col">
+                                    <div class="flex items-center space-x-2 mb-1">
+                                        <span v-if="debt.to === currentUser" class="text-xs font-bold text-sumi flex items-center">
+                                            我 <i class="fa-solid fa-arrow-right text-stone/40 mx-1.5 text-[10px]"></i> {{ debt.from }}
+                                            <span class="ml-2 text-[9px] bg-green-100 text-green-600 px-1.5 py-0.5 rounded font-bold">應收</span>
+                                        </span>
+                                        <span v-else class="text-xs font-bold text-sumi flex items-center">
+                                            我 <i class="fa-solid fa-arrow-right text-stone/40 mx-1.5 text-[10px]"></i> {{ debt.to }}
+                                            <span class="ml-2 text-[9px] bg-red-50 text-red-400 px-1.5 py-0.5 rounded font-bold">應付</span>
+                                        </span>
+                                    </div>
+                                    <div class="flex space-x-3 text-[10px] text-stone/60 font-mono">
+                                        <span>NT$ {{ Math.round(debt.amount).toLocaleString() }}</span>
+                                        <span>¥ {{ Math.round(debt.amount / exchangeRate).toLocaleString() }}</span>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button @click="openSettleModal(debt)" class="w-10 h-10 rounded-full bg-white border border-stone/10 text-clover-500 hover:bg-clover-50 flex items-center justify-center shadow-sm transition active:scale-95">
+                                        <i class="fa-regular fa-handshake text-lg"></i>
+                                    </button>
+                                    <button @click="openHistoryModal(debt)" class="w-10 h-10 rounded-full bg-white border border-stone/10 text-stone-500 hover:bg-stone-50 flex items-center justify-center shadow-sm transition active:scale-95">
+                                        <i class="fa-solid fa-file-invoice-dollar text-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="currentTab === 'info'" class="animate-fade-in-up pt-2">
+                <div class="px-2 mb-4">
+                    <h2 class="text-[10px] tracking-widest font-bold uppercase text-stone mb-4 pl-4 border-l-2 border-clover-300 flex justify-between items-center">
+                        <span>購買清單</span>
+                        <span v-if="currentShoppingMember" class="text-clover-500 font-bold bg-clover-50 px-2 py-0.5 rounded-md">{{ currentShoppingMember }}</span>
+                    </h2>
+                    <div class="mb-6 px-1 grid grid-cols-4 gap-2"><button v-for="member in members" :key="member" @click="toggleShoppingMember(member)" :class="currentShoppingMember === member ? 'bg-clover-300 text-white shadow-md' : 'bg-white text-stone border border-stone/10'" class="py-2.5 rounded-xl text-xs font-medium transition-all truncate">{{ member }}</button></div>
+                    <div v-if="filteredShoppingList.length === 0" class="flex flex-col items-center justify-center py-20 text-stone/30"><i class="fa-solid fa-basket-shopping text-4xl mb-4 opacity-30 text-clover-300"></i><p class="font-light text-xs tracking-[0.2em]">EMPTY LIST</p></div>
+
+                    <div class="space-y-4 px-1 mb-8">
+                        <div v-for="item in sortedShoppingList" :key="item.id" class="bg-white rounded-[24px] p-5 shadow-card group relative flex flex-col transition-all duration-300 border border-transparent" :class="item.isBought ? 'opacity-60 grayscale-[0.8] order-last bg-stone-50' : 'order-first'">
+                            
+                            <div v-if="item.owner" class="absolute top-4 left-4 z-10"><span class="bg-white/90 backdrop-blur-md text-clover-600 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm border border-stone/5">{{ item.owner }}</span></div>
+                            
+                            <div class="absolute top-4 right-4 z-10 flex space-x-2">
+                                <a v-if="item.link" :href="item.link" target="_blank" class="w-9 h-9 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-clover-500 shadow-sm border border-stone/5" @click.stop><i class="fa-solid fa-link text-sm"></i></a>
+                                <button @click="toggleBought(item)" class="w-9 h-9 backdrop-blur-md rounded-full flex items-center justify-center shadow-sm transition-colors border border-stone/5" :class="item.isBought ? 'bg-clover-500 text-white' : 'bg-white/90 text-stone/30 hover:text-clover-500'"><i class="fa-solid fa-check text-sm"></i></button>
+                            </div>
+
+                            <div class="relative w-full aspect-[4/3] mb-4 rounded-2xl overflow-hidden bg-clover-50/50 border border-stone/5">
+                                <img v-if="item.image" :src="item.image" class="w-full h-full object-cover">
+                                <div v-else class="w-full h-full flex items-center justify-center text-clover-200"><i class="fa-solid fa-image text-4xl"></i></div>
+                                <div v-if="item.isBought" class="absolute inset-0 bg-stone-900/10 flex items-center justify-center backdrop-blur-[1px]"><span class="bg-white text-clover-600 px-4 py-1 rounded-full font-bold text-xs tracking-widest shadow-md">BOUGHT</span></div>
+                            </div>
+                            
+                            <h3 class="font-bold text-sumi text-lg mb-2 px-1" :class="item.isBought ? 'line-through decoration-clover-500 text-stone' : ''">{{ item.name }}</h3>
+                            <p class="text-sm text-stone px-1 leading-7 whitespace-pre-wrap">{{ item.description }}</p>
+                            
+                            <div v-if="!isLocked" class="flex justify-end space-x-3 mt-4 pt-3 border-t border-stone/5">
+                                <button @click="editShopping(item)" class="text-xs text-stone hover:text-clover-500 flex items-center px-2 py-1"><i class="fa-solid fa-pen mr-1.5"></i> Edit</button>
+                                <button @click="askDelete('shopping', item.id)" class="text-xs text-stone hover:text-red-400 flex items-center px-2 py-1"><i class="fa-solid fa-trash-can mr-1.5"></i> Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div v-if="!isLocked" class="flex justify-center pb-8 pt-4 border-t border-dashed border-stone/10"><button @click="openShoppingModal" class="flex items-center space-x-2 bg-clover-300 text-white py-3 px-8 rounded-full shadow-lg shadow-clover-200 hover:bg-clover-400 transition-all group"><i class="fa-solid fa-plus text-sm"></i><span class="text-xs font-bold tracking-widest">新增購買物件</span></button></div>
+                </div>
+            </div>
+
+        </main>
+
+        <div v-if="showPersonalExpenseModal" class="fixed inset-0 bg-sumi/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white w-full sm:max-w-xs rounded-[32px] p-6 shadow-2xl animate-fade-in-up max-h-[90dvh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-5">
+                    <h3 class="font-medium text-sumi tracking-wide">新增<span class="text-stone-500">個人</span>支出</h3>
+                    <button @click="showPersonalExpenseModal = false" class="text-stone/40 hover:text-stone"><i class="fa-solid fa-times text-xl"></i></button>
+                </div>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-6 gap-2 mb-2">
+                        <button v-for="cat in categories" :key="cat.id" @click="personalExpenseData.category = cat.id" :class="personalExpenseData.category === cat.id ? 'bg-sumi text-white shadow-md' : 'bg-stone/5 text-stone/40 hover:bg-stone/10'" class="flex flex-col items-center justify-center py-2 rounded-xl transition-all">
+                            <i :class="cat.icon" class="text-sm mb-1"></i>
+                            <span class="text-[8px] font-bold">{{ cat.name }}</span>
+                        </button>
+                    </div>
+                    <input v-model="personalExpenseData.description" placeholder="項目名稱 (僅自己可見)..." class="w-full bg-stone-50 border-none rounded-2xl p-4 text-sm text-sumi focus:ring-2 focus:ring-stone-200 outline-none placeholder-stone/40" enterkeyhint="next">
+                    <div class="flex space-x-3 relative">
+                        <div class="flex-1 relative">
+                            <span class="absolute left-4 top-4 text-stone/50 text-sm font-bold">¥</span>
+                            <input v-model.number="personalExpenseData.amount" type="number" inputmode="decimal" placeholder="0" class="w-full pl-8 bg-stone-50 border-none rounded-2xl p-4 text-sm text-sumi focus:ring-2 focus:ring-stone-200 outline-none font-mono" enterkeyhint="done" onclick="this.select()">
+                        </div>
+                        <div class="flex items-center justify-center px-4 bg-stone-50 rounded-2xl min-w-[90px]"><div class="text-right"><div class="text-[9px] text-stone uppercase tracking-wide">NT$</div><div class="text-xs text-sumi font-bold">{{ Math.round(personalExpenseData.amount * exchangeRate).toLocaleString() }}</div></div></div>
+                    </div>
+                    <button @click="savePersonalExpense" :disabled="isSubmitting" class="w-full mt-2 py-4 rounded-2xl bg-sumi text-white text-sm font-medium transition duration-300 flex items-center justify-center disabled:opacity-50">
+                        <span v-if="isSubmitting"><i class="fa-solid fa-spinner fa-spin mr-2"></i> 處理中...</span>
+                        <span v-else><i class="fa-solid fa-lock mr-2"></i> 儲存個人支出</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="showSettleModal" class="fixed inset-0 bg-sumi/30 backdrop-blur-sm z-[220] flex items-center justify-center p-4">
+            <div class="bg-white w-full sm:max-w-xs rounded-[32px] p-6 shadow-2xl animate-fade-in-up max-h-[90dvh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-lg text-sumi tracking-wide">
+                        {{ settleData.type === 'pay' ? '付款' : '收款' }}
+                    </h3>
+                    <button @click="showSettleModal = false" class="text-stone/40 hover:text-stone"><i class="fa-solid fa-times text-xl"></i></button>
+                </div>
+                <div class="bg-stone-50 p-4 rounded-2xl mb-6 text-center">
+                    <div class="text-xs text-stone font-bold mb-3">對象: <span class="text-sumi">{{ settleData.targetName }}</span></div>
+                    
+                    <div class="flex justify-center space-x-2 mb-4">
+                        <button @click="settleData.currency = 'TWD'" :class="settleData.currency === 'TWD' ? 'bg-sumi text-white' : 'bg-white text-stone border border-stone/10'" class="px-4 py-1.5 rounded-lg text-xs font-bold transition">TWD</button>
+                        <button @click="settleData.currency = 'JPY'" :class="settleData.currency === 'JPY' ? 'bg-sumi text-white' : 'bg-white text-stone border border-stone/10'" class="px-4 py-1.5 rounded-lg text-xs font-bold transition">JPY</button>
+                    </div>
+                    <input v-model.number="settleData.amount" type="number" inputmode="decimal" placeholder="Amount" class="w-full bg-white border-none rounded-xl p-3 text-center text-xl font-bold font-mono outline-none focus:ring-2 focus:ring-clover-200" onclick="this.select()">
+                    <div class="text-[10px] text-stone mt-2" v-if="settleData.currency === 'JPY'">
+                        ≈ NT$ {{ Math.round(settleData.amount * exchangeRate).toLocaleString() }}
+                    </div>
+                </div>
+                <button @click="confirmSettle" :disabled="!settleData.amount || settleData.amount <= 0" class="w-full py-4 rounded-2xl bg-clover-500 text-white font-bold shadow-lg hover:bg-clover-600 disabled:opacity-50 transition">
+                    {{ settleData.type === 'pay' ? '確認付款' : '確認收款' }}
+                </button>
+            </div>
+        </div>
+
+        <div v-if="showHistoryModal" class="fixed inset-0 bg-sumi/30 backdrop-blur-sm z-[220] flex items-center justify-center p-4">
+            <div class="bg-white w-full sm:max-w-xs rounded-[32px] p-6 shadow-2xl animate-fade-in-up flex flex-col max-h-[85dvh]">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-lg text-sumi tracking-wide">交易紀錄</h3>
+                    <button @click="showHistoryModal = false" class="text-stone/40 hover:text-stone"><i class="fa-solid fa-times text-xl"></i></button>
+                </div>
+                <div class="text-xs text-stone text-center mb-4 pb-4 border-b border-stone/10">
+                    與 <span class="font-bold text-sumi">{{ historyTargetName }}</span> 的往來紀錄
+                </div>
+                
+                <div class="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin">
+                    <div v-if="historyList.length === 0" class="text-center text-stone/30 py-8 text-xs">無交易紀錄</div>
+                    
+                    <div v-for="item in historyList" :key="item.id" @click="showHistoryModal = false; openExpenseAction(item)" class="bg-stone-50 p-3 rounded-xl border border-stone/10 flex justify-between items-center cursor-pointer active:bg-stone-100 transition">
+                        <div>
+                            <div class="text-xs font-bold text-sumi mb-1">{{ item.description }}</div>
+                            <div class="text-[10px] text-stone">{{ item.date }}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-bold font-mono text-sumi">
+                                NT$ {{ Math.round(item.amount).toLocaleString() }}
+                            </div>
+                            <div v-if="item.originalCurrency === 'JPY'" class="text-[9px] text-stone/50 font-mono">
+                                ¥ {{ item.originalAmount }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="showTrafficModal" class="fixed inset-0 bg-sumi/20 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
+            <div class="bg-white w-full sm:w-[400px] rounded-[32px] p-8 shadow-2xl animate-fade-in-up max-h-[90dvh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-8"><h3 class="text-lg font-bold text-sumi tracking-wide"><i class="fa-solid fa-pen-to-square text-clover-300 mr-2"></i> {{ isEditingTraffic ? 'Edit' : 'Add' }} Transport</h3><button @click="showTrafficModal = false" class="w-8 h-8 rounded-full bg-clover-50 text-stone hover:bg-stone/10 flex items-center justify-center"><i class="fa-solid fa-times"></i></button></div>
+                <div class="space-y-5">
+                    <div class="grid grid-cols-5 gap-2"><button v-for="t in ['plane', 'train', 'bus', 'taxi', 'walk']" :key="t" @click="trafficModalData.type = t" :class="trafficModalData.type === t ? 'bg-clover-300 text-white shadow-md' : 'bg-clover-50 text-stone'" class="p-3 rounded-2xl flex justify-center items-center aspect-square"><i :class="getTransportIcon(t)" class="text-lg"></i></button></div>
+                    <div class="grid grid-cols-2 gap-4"><div><label class="text-[10px] font-bold text-stone tracking-widest block mb-2">START</label><input v-model="trafficModalData.time" type="time" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm font-mono"></div><div><label class="text-[10px] font-bold text-stone tracking-widest block mb-2">END</label><input v-model="trafficModalData.endTime" type="time" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm font-mono"></div></div>
+                    <div><label class="text-[10px] font-bold text-stone tracking-widest block mb-2">DESTINATION</label><input v-model="trafficModalData.destination" type="text" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"></div>
+                    <div><label class="text-[10px] font-bold text-stone tracking-widest block mb-2">NOTE</label><textarea v-model="trafficModalData.description" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm h-24 resize-none"></textarea></div>
+                    <div class="grid grid-cols-1 gap-3"><input v-model="trafficModalData.url" type="text" placeholder="Info Link" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"><input v-model="trafficModalData.ticketUrl" type="text" placeholder="Ticket Link" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"></div>
+                    <button @click="saveTraffic" class="w-full py-4 rounded-2xl bg-clover-300 text-white font-medium shadow-lg hover:bg-clover-400 mt-2">Save</button>
+                </div>
+            </div>
+        </div>
+        
+        <div v-if="showLocationModal" class="fixed inset-0 bg-sumi/20 backdrop-blur-[2px] z-50 flex items-center justify-center p-6">
+             <div class="bg-white w-full max-w-xs rounded-[32px] p-8 shadow-2xl animate-fade-in-up max-h-[90dvh] overflow-y-auto">
+                 <div class="flex justify-between items-center mb-6"><h3 class="text-lg font-bold text-sumi tracking-wide">Location</h3><button @click="showLocationModal = false" class="w-8 h-8 rounded-full bg-clover-50 text-stone hover:bg-stone/10 flex items-center justify-center"><i class="fa-solid fa-times"></i></button></div>
+                <div class="space-y-4"><input v-model="locationModalData.name" type="text" placeholder="Name" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"><input v-model="locationModalData.description" type="text" placeholder="Description" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"><input v-model="locationModalData.url" type="text" placeholder="Google Maps URL" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"><button @click="saveLocation" class="w-full py-3 rounded-2xl bg-clover-300 text-white font-medium shadow-lg mt-2">Save</button></div>
+            </div>
+        </div>
+
+        <div v-if="showShoppingModal" class="fixed inset-0 bg-sumi/20 backdrop-blur-[2px] z-50 flex items-center justify-center p-6">
+            <div class="bg-white w-full max-w-xs rounded-[32px] p-8 shadow-2xl animate-fade-in-up max-h-[90dvh] overflow-y-auto">
+                 <div class="flex justify-between items-center mb-6"><h3 class="text-lg font-bold text-sumi tracking-wide">Item</h3><button @click="showShoppingModal = false" class="w-8 h-8 rounded-full bg-clover-50 text-stone hover:bg-stone/10 flex items-center justify-center"><i class="fa-solid fa-times"></i></button></div>
+                <div class="space-y-4">
+                    <div class="relative w-full aspect-video bg-clover-50 rounded-2xl overflow-hidden border-2 border-dashed border-clover-200 hover:border-clover-300 transition group cursor-pointer" @click="$refs.fileInput.click()"><input type="file" ref="fileInput" accept="image/*" class="hidden" @change="handleImageUpload"><img v-if="shoppingModalData.image" :src="shoppingModalData.image" class="w-full h-full object-cover"><div v-else class="absolute inset-0 flex flex-col items-center justify-center text-clover-300"><i class="fa-solid fa-camera text-2xl mb-2"></i><span class="text-[10px] font-bold tracking-widest">ADD PHOTO</span></div></div>
+                    <input v-model="shoppingModalData.name" type="text" placeholder="Name" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"><input v-model="shoppingModalData.link" type="text" placeholder="Link" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm"><textarea v-model="shoppingModalData.description" placeholder="Description" class="w-full bg-clover-50 border-none rounded-2xl p-4 text-sm h-24 resize-none"></textarea>
+                    <div><label class="text-[10px] font-bold text-stone tracking-widest block mb-2 pl-1">OWNER</label><div class="grid grid-cols-4 gap-2"><button v-for="member in members" :key="member" @click="shoppingModalData.owner = member" :class="shoppingModalData.owner === member ? 'bg-camel-300 text-white shadow-md' : 'bg-clover-50 text-stone hover:bg-clover-100'" class="py-2. rounded-xl text-[10px] font-medium transition-all truncate">{{ member }}</button></div></div>
+                    <button @click="saveShoppingItem" :disabled="isSubmitting" class="w-full py-3 rounded-2xl bg-clover-300 text-white font-medium shadow-lg mt-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span v-if="isSubmitting"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Saving...</span>
+                        <span v-else>Save</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="expenseActionModal.show" class="fixed inset-0 bg-sumi/30 backdrop-blur-sm z-[220] flex items-center justify-center p-4">
+            <div class="bg-white w-full sm:max-w-xs rounded-[32px] p-6 shadow-2xl animate-fade-in-up max-h-[90dvh] overflow-y-auto">
+                <div class="flex items-start space-x-4 mb-6">
+                    <div class="w-12 h-12 rounded-full bg-clover-100 flex items-center justify-center text-clover-600 text-lg shadow-sm">
+                        <i :class="getCategoryIcon(expenseActionModal.item.category)"></i>
+                    </div>
+                    <div class="flex-1 overflow-hidden">
+                        <h3 class="font-bold text-lg text-sumi truncate">{{ expenseActionModal.item.description }}</h3>
+                        <p class="text-xs text-stone">NT$ {{ Math.round(expenseActionModal.item.amount).toLocaleString() }}</p>
+                        <span v-if="expenseActionModal.item.isPrivate" class="inline-block mt-1 bg-stone-100 text-stone-500 text-[9px] px-2 py-0.5 rounded font-bold">私人支出 (Private)</span>
+                    </div>
+                    <button @click="expenseActionModal.show = false" class="text-stone/40 hover:text-stone"><i class="fa-solid fa-times text-xl"></i></button>
+                </div>
+                <div class="space-y-3">
+                    <button @click="triggerEditExpense" class="w-full py-4 rounded-2xl bg-stone/5 text-sumi font-bold text-sm hover:bg-clover-50 hover:text-clover-600 transition-all flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-pen"></i><span>編輯 (Edit)</span>
+                    </button>
+                    <button @click="triggerDeleteExpense" class="w-full py-4 rounded-2xl bg-red-50 text-red-400 font-bold text-sm hover:bg-red-100 transition-all flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-trash-can"></i><span>刪除 (Delete)</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
 <script type="module">
+// 1. Firebase Imports
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getDatabase, ref as dbRef, set, onValue, push, update, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 import { getStorage, ref as storageRef, uploadString, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
-// ★ 新增：引入驗證模組
 import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+// 2. Vue Import (解決 Vue is not defined 問題)
+import { createApp, ref, computed, onMounted, watch, nextTick } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDRtLqLIPtLB7WmGqwbS4YjRHpDRF8Rv0g",
@@ -21,7 +743,7 @@ try {
     const db = getDatabase(app);
     const storage = getStorage(app);
     
-    // ★ 新增：初始化 Auth 並執行匿名登入
+    // 初始化 Auth 並執行匿名登入
     const auth = getAuth(app);
     signInAnonymously(auth)
         .then(() => {
@@ -41,7 +763,6 @@ try {
 
 const db = window.firebaseDb;
 const storage = window.firebaseStorage;
-const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
 
 createApp({
     setup() {
@@ -814,3 +1535,5 @@ createApp({
     }
 }).mount('#app');
 </script>
+</body>
+</html>
