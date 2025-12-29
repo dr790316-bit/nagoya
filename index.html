@@ -280,6 +280,10 @@
                         <div class="flex items-start space-x-4 overflow-hidden flex-1">
                             <div v-if="exp.type === 'repayment'" class="w-9 h-9 rounded-full bg-green-100 text-green-500 flex-shrink-0 flex items-center justify-center text-xs font-bold mt-1"><i class="fa-regular fa-handshake"></i></div>
                             <div v-else class="w-9 h-9 rounded-full bg-clover-50 text-clover-500 flex-shrink-0 flex items-center justify-center text-xs font-bold mt-1">{{ exp.payer.substring(0,1) }}</div>
+                            <!-- NEW: Thumbnail -->
+                            <div v-if="exp.image" class="w-9 h-9 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden border border-stone/10 shadow-sm mt-1 cursor-pointer hover:opacity-80" @click.stop="openImageModal(exp.image)">
+                                <img :src="exp.image" class="w-full h-full object-cover">
+                            </div>
                             <div class="min-w-0 flex-1">
                                 <p class="text-sumi text-sm truncate font-medium leading-tight">{{ exp.description }}</p>
                                 <p class="text-[10px] text-stone mt-0.5 mb-1.5">{{ exp.date }} <span class="ml-2 text-stone/50 font-mono">¥{{ calcJPY(exp) }}</span></p>
@@ -405,7 +409,7 @@
                                 <button @click="toggleBought(item)" class="w-9 h-9 backdrop-blur-md rounded-full flex items-center justify-center shadow-sm transition-colors border border-stone/5" :class="item.isBought ? 'bg-clover-500 text-white' : 'bg-white/90 text-stone/30 hover:text-clover-500'"><i class="fa-solid fa-check text-sm"></i></button>
                             </div>
                             <div class="relative w-full aspect-[4/3] mb-4 rounded-2xl overflow-hidden bg-clover-50/50 border border-stone/5">
-                                <img v-if="item.image" :src="item.image" class="w-full h-full object-cover">
+                                <img v-if="item.image" :src="item.image" class="w-full h-full object-cover cursor-pointer transition-transform duration-700 hover:scale-110" @click.stop="openImageModal(item.image)">
                                 <div v-else class="w-full h-full flex items-center justify-center text-clover-200"><i class="fa-solid fa-image text-4xl"></i></div>
                                 <div v-if="item.isBought" class="absolute inset-0 bg-stone-900/10 flex items-center justify-center backdrop-blur-[1px]"><span class="bg-white text-clover-600 px-4 py-1 rounded-full font-bold text-xs tracking-widest shadow-md">BOUGHT</span></div>
                             </div>
@@ -1026,11 +1030,7 @@ const app = createApp({
         const getWeatherDay = (idx) => { const d = new Date(); d.setDate(d.getDate() + idx); return ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()]; };
         const getWeatherIcon = (c) => { if (c === 0) return 'fa-solid fa-sun'; if (c <= 3) return 'fa-solid fa-cloud-sun'; if (c <= 48) return 'fa-solid fa-smog'; if (c <= 67) return 'fa-solid fa-cloud-rain'; if (c <= 77) return 'fa-regular fa-snowflake'; if (c > 80 && c < 85) return 'fa-solid fa-cloud-showers-heavy'; if (c >= 85) return 'fa-solid fa-snowflake'; return 'fa-solid fa-cloud'; };
         
-        // Global Error Handler
-        app.config.errorHandler = (err, instance, info) => {
-            console.error("Vue Global Error:", err, info);
-            showToast('系統發生錯誤，請重新載入', 'error');
-        };
+        
 
         return {
             isLoading, loadingTooLong, isSubmitting, isProcessingImg, currentUser, setUser, isLocked, confirmLogout, toggleGlobalLock, isOnline,
